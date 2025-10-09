@@ -1503,46 +1503,27 @@ Mario.PlaySuperIntegration.prototype.setupSimpleTreasureEvents = function (overl
         }
     });
 
-    Mario.PlaySuperIntegration.prototype.setupTreasureChestEvents = function (overlay, rewards) {
-        // Skip button
-        const skipBtn = document.getElementById('treasure-skip-btn');
-        if (skipBtn) {
-            skipBtn.addEventListener('click', () => {
-                console.log('[TreasureChest] Skip button clicked');
-                this.closeTreasureChest();
-            });
+    // Close on escape key
+    const handleKeyPress = (event) => {
+        if (event.key === 'Escape') {
+            console.log('[TreasureChest] Escape key pressed - closing');
+            this.closeTreasureChest();
+            document.removeEventListener('keydown', handleKeyPress);
         }
-
-        // Close on overlay click (outside container)
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) {
-                console.log('[TreasureChest] Overlay clicked - closing');
-                this.closeTreasureChest();
-            }
-        });
-
-        console.log('[TreasureChest] ✅ Event listeners set up');
     };
-};
+    document.addEventListener('keydown', handleKeyPress);
 
-Mario.PlaySuperIntegration.prototype.setupTreasureChestEvents = function (overlay, rewards) {
-    // Skip button
-    const skipBtn = document.getElementById('treasure-skip-btn');
-    if (skipBtn) {
-        skipBtn.addEventListener('click', () => {
-            overlay.remove();
-        });
-    }
-
-    // Close on overlay click (outside container)
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.remove();
+    // Auto-close after 30 seconds if no interaction
+    setTimeout(() => {
+        const currentOverlay = document.getElementById('mario-treasure-chest-overlay');
+        if (currentOverlay && currentOverlay === overlay) {
+            console.log('[TreasureChest] Auto-closing after 30 seconds');
+            this.closeTreasureChest();
         }
-    });
+    }, 30000);
+
+    console.log('[TreasureChest] ✅ Event listeners set up');
 };
-
-
 
 Mario.PlaySuperIntegration.prototype.purchaseSelectedReward = function (reward) {
     const config = Mario.playSuperConfig.getConfig();
@@ -1707,33 +1688,6 @@ Mario.PlaySuperIntegration.prototype.showTreasureError = function (message) {
             this.showTreasureChest();
         }, 500);
     });
-};
-
-Mario.PlaySuperIntegration.prototype.setupTreasureChestEvents = function (overlay, rewards) {
-    // Skip button
-    const skipBtn = document.getElementById('treasure-skip-btn');
-    if (skipBtn) {
-        skipBtn.addEventListener('click', () => {
-            this.closeTreasureChest();
-        });
-    }
-
-    // Close on escape key
-    const handleKeyPress = (event) => {
-        if (event.key === 'Escape') {
-            this.closeTreasureChest();
-            document.removeEventListener('keydown', handleKeyPress);
-        }
-    };
-    document.addEventListener('keydown', handleKeyPress);
-
-    // Auto-close after 30 seconds if no interaction
-    setTimeout(() => {
-        const currentOverlay = document.getElementById('mario-treasure-chest-overlay');
-        if (currentOverlay && currentOverlay === overlay) {
-            this.closeTreasureChest();
-        }
-    }, 30000);
 };
 
 Mario.PlaySuperIntegration.prototype.closeTreasureChest = function () {
