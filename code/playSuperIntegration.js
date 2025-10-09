@@ -92,7 +92,7 @@ Mario.PlaySuperIntegration.prototype.getPlayerUUID = function () {
     let isNewUser = false;
 
     if (!uuid) {
-        uuid = 'mario_player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        uuid = 'mario_player_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
         localStorage.setItem('playsuper_player_uuid', uuid);
         isNewUser = true;
 
