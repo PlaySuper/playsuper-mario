@@ -1,6 +1,6 @@
 /**
-	State for moving between different playable levels.
-	Code by Rob Kleffner, 2011
+    State for moving between different playable levels.
+    Code by Rob Kleffner, 2011
 */
 
 Mario.MapTile = {
@@ -11,7 +11,7 @@ Mario.MapTile = {
     Decoration: 4
 };
 
-Mario.MapState = function() {
+Mario.MapState = function () {
     this.camera = new Enjine.Camera();
 
     this.Level = [];
@@ -31,6 +31,8 @@ Mario.MapState = function() {
     this.EnterLevel = false;
     this.LevelDifficulty = 0;
     this.LevelType = 0;
+    this.GotoTitleState = false;
+    this.lastKeyPressTime = 0; // Track last key press to prevent rapid toggling
 
     this.WorldNumber = -1;
     this.NextWorld();
@@ -38,13 +40,13 @@ Mario.MapState = function() {
 
 Mario.MapState.prototype = new Enjine.GameState();
 
-Mario.MapState.prototype.Enter = function() {
+Mario.MapState.prototype.Enter = function () {
     this.WaterSprite = new Enjine.AnimatedSprite();
     this.WaterSprite.Image = Enjine.Resources.Images["worldMap"];
     this.WaterSprite.SetColumnCount(16);
     this.WaterSprite.SetRowCount(16);
     this.WaterSprite.AddNewSequence("loop", 14, 0, 14, 3);
-    this.WaterSprite.FramesPerSecond = 1/3;
+    this.WaterSprite.FramesPerSecond = 1 / 3;
     this.WaterSprite.PlaySequence("loop", true);
     this.WaterSprite.X = 0;
     this.WaterSprite.Y = 0;
@@ -57,7 +59,7 @@ Mario.MapState.prototype.Enter = function() {
     this.DecoSprite.AddNewSequence("world1", 11, 0, 11, 3);
     this.DecoSprite.AddNewSequence("world2", 12, 0, 12, 3);
     this.DecoSprite.AddNewSequence("world3", 13, 0, 13, 3);
-    this.DecoSprite.FramesPerSecond = 1/3;
+    this.DecoSprite.FramesPerSecond = 1 / 3;
     this.DecoSprite.PlaySequence("world0", true);
     this.DecoSprite.X = 0;
     this.DecoSprite.Y = 0;
@@ -67,7 +69,7 @@ Mario.MapState.prototype.Enter = function() {
     this.HelpSprite.SetColumnCount(16);
     this.HelpSprite.SetRowCount(16);
     this.HelpSprite.AddNewSequence("help", 7, 3, 7, 5);
-    this.HelpSprite.FramesPerSecond = 1/2;
+    this.HelpSprite.FramesPerSecond = 1 / 2;
     this.HelpSprite.PlaySequence("help", true);
     this.HelpSprite.X = 0;
     this.HelpSprite.Y = 0;
@@ -77,7 +79,7 @@ Mario.MapState.prototype.Enter = function() {
     this.SmallMario.SetColumnCount(16);
     this.SmallMario.SetRowCount(16);
     this.SmallMario.AddNewSequence("small", 1, 0, 1, 1);
-    this.SmallMario.FramesPerSecond = 1/3;
+    this.SmallMario.FramesPerSecond = 1 / 3;
     this.SmallMario.PlaySequence("small", true);
     this.SmallMario.X = 0;
     this.SmallMario.Y = 0;
@@ -88,7 +90,7 @@ Mario.MapState.prototype.Enter = function() {
     this.LargeMario.SetRowCount(8);
     this.LargeMario.AddNewSequence("large", 0, 2, 0, 3);
     this.LargeMario.AddNewSequence("fire", 0, 4, 0, 5);
-    this.LargeMario.FramesPerSecond = 1/3;
+    this.LargeMario.FramesPerSecond = 1 / 3;
     this.LargeMario.PlaySequence("large", true);
     this.LargeMario.X = 0;
     this.LargeMario.Y = 0;
@@ -99,21 +101,25 @@ Mario.MapState.prototype.Enter = function() {
     //get the correct world decoration
     this.DecoSprite.PlaySequence("world" + (this.WorldNumber % 4), true);
 
-    if (!Mario.MarioCharacter.Fire) {
+    // Safe check for Mario character
+    if (Mario.MarioCharacter && !Mario.MarioCharacter.Fire) {
         this.LargeMario.PlaySequence("large", true);
-    } else {
+    } else if (Mario.MarioCharacter) {
         this.LargeMario.PlaySequence("fire", true);
+    } else {
+        console.warn('Mario character not available in mapState');
+        this.LargeMario.PlaySequence("large", true); // fallback
     }
 
     this.EnterLevel = false;
     this.LevelDifficulty = 0;
     this.LevelType = 0;
 
-	Mario.PlayMapMusic();
+    Mario.PlayMapMusic();
 };
 
-Mario.MapState.prototype.Exit = function() {
-	  Mario.StopMusic();
+Mario.MapState.prototype.Exit = function () {
+    Mario.StopMusic();
 
     delete this.WaterSprite;
     delete this.DecoSprite;
@@ -124,7 +130,7 @@ Mario.MapState.prototype.Exit = function() {
     delete this.Font;
 };
 
-Mario.MapState.prototype.NextWorld = function() {
+Mario.MapState.prototype.NextWorld = function () {
     var generated = false;
     this.WorldNumber++;
 
@@ -143,9 +149,13 @@ Mario.MapState.prototype.NextWorld = function() {
         generated = this.GenerateLevel();
     }
     this.RenderStatic();
+
+    // 🔄 Reset key press timer when entering map state
+    this.lastKeyPressTime = 0;
+    console.log('✅ Map state entered - key input ready');
 };
 
-Mario.MapState.prototype.GenerateLevel = function() {
+Mario.MapState.prototype.GenerateLevel = function () {
     var x = 0, y = 0, t0 = 0, t1 = 0, td = 0, t = 0;
 
     var n0 = new Mario.ImprovedNoise((Math.random() * 9223372036854775807) | 0);
@@ -221,7 +231,7 @@ Mario.MapState.prototype.GenerateLevel = function() {
     return true;
 };
 
-Mario.MapState.prototype.FindConnection = function(width, height) {
+Mario.MapState.prototype.FindConnection = function (width, height) {
     var x = 0, y = 0;
     for (x = 0; x < width; x++) {
         for (y = 0; y < height; y++) {
@@ -234,7 +244,7 @@ Mario.MapState.prototype.FindConnection = function(width, height) {
     return false;
 };
 
-Mario.MapState.prototype.Connect = function(xSource, ySource, width, height) {
+Mario.MapState.prototype.Connect = function (xSource, ySource, width, height) {
     var maxDistance = 10000, xTarget = 0, yTarget = 0, x = 0, y = 0,
         xd = 0, yd = 0, d = 0;
 
@@ -259,7 +269,7 @@ Mario.MapState.prototype.Connect = function(xSource, ySource, width, height) {
     return;
 };
 
-Mario.MapState.prototype.DrawRoad = function(x0, y0, x1, y1) {
+Mario.MapState.prototype.DrawRoad = function (x0, y0, x1, y1) {
     var xFirst = false;
     if (Math.random() > 0.5) {
         xFirst = true;
@@ -297,7 +307,7 @@ Mario.MapState.prototype.DrawRoad = function(x0, y0, x1, y1) {
     }
 };
 
-Mario.MapState.prototype.FindCaps = function(width, height) {
+Mario.MapState.prototype.FindCaps = function (width, height) {
     var x = 0, y = 0, xCap = -1, yCap = -1, roads = 0, xx = 0, yy = 0;
 
     for (x = 0; x < width; x++) {
@@ -332,7 +342,7 @@ Mario.MapState.prototype.FindCaps = function(width, height) {
     this.Travel(xCap, yCap, -1, 0);
 };
 
-Mario.MapState.prototype.Travel = function(x, y, dir, depth) {
+Mario.MapState.prototype.Travel = function (x, y, dir, depth) {
     if (this.Level[x][y] !== Mario.MapTile.Road && this.Level[x][y] !== Mario.MapTile.Level) {
         return;
     }
@@ -376,7 +386,7 @@ Mario.MapState.prototype.Travel = function(x, y, dir, depth) {
     }
 };
 
-Mario.MapState.prototype.RenderStatic = function() {
+Mario.MapState.prototype.RenderStatic = function () {
     var x = 0, y = 0, p0 = 0, p1 = 0, p2 = 0, p3 = 0, s = 0, xx = 0, yy = 0,
         image = Enjine.Resources.Images["worldMap"], type = 0;
 
@@ -429,7 +439,7 @@ Mario.MapState.prototype.RenderStatic = function() {
     }
 };
 
-Mario.MapState.prototype.IsRoad = function(x, y) {
+Mario.MapState.prototype.IsRoad = function (x, y) {
     if (x < 0) {
         x = 0;
     }
@@ -445,7 +455,7 @@ Mario.MapState.prototype.IsRoad = function(x, y) {
     return false;
 };
 
-Mario.MapState.prototype.IsWater = function(x, y) {
+Mario.MapState.prototype.IsWater = function (x, y) {
     var xx = 0, yy = 0;
     if (x < 0) {
         x = 0;
@@ -465,8 +475,19 @@ Mario.MapState.prototype.IsWater = function(x, y) {
     return true;
 };
 
-Mario.MapState.prototype.Update = function(delta) {
+Mario.MapState.prototype.Update = function (delta) {
     var x = 0, y = 0, difficulty = 0, type = 0;
+
+    // 🏠 Check for Home key (H) to return to title screen
+    // Add debouncing to prevent rapid state changes
+    const currentTime = Date.now();
+    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) &&
+        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
+        console.log('🏠 Returning to home screen from map...');
+        this.lastKeyPressTime = currentTime;
+        this.GotoTitleState = true;
+        return;
+    }
 
     if (this.WorldNumber === 8) {
         return;
@@ -542,7 +563,9 @@ Mario.MapState.prototype.Update = function(delta) {
     this.WaterSprite.Update(delta);
     this.DecoSprite.Update(delta);
     this.HelpSprite.Update(delta);
-    if (!Mario.MarioCharacter.Large) {
+
+    // Safe check for Mario character
+    if (Mario.MarioCharacter && !Mario.MarioCharacter.Large) {
         this.SmallMario.X = this.XMario + (this.XMarioA * delta) | 0;
         this.SmallMario.Y = this.YMario + ((this.YMarioA * delta) | 0) - 6;
         this.SmallMario.Update(delta);
@@ -553,7 +576,7 @@ Mario.MapState.prototype.Update = function(delta) {
     }
 };
 
-Mario.MapState.prototype.TryWalking = function(xd, yd) {
+Mario.MapState.prototype.TryWalking = function (xd, yd) {
     var x = (this.XMario / 16) | 0, y = (this.YMario / 16) | 0, xt = x + xd, yt = y + yd;
 
     if (this.Level[xt][yt] === Mario.MapTile.Road || this.Level[xt][yt] === Mario.MapTile.Level) {
@@ -569,7 +592,7 @@ Mario.MapState.prototype.TryWalking = function(xd, yd) {
     }
 };
 
-Mario.MapState.prototype.CalcDistance = function(x, y, xa, ya) {
+Mario.MapState.prototype.CalcDistance = function (x, y, xa, ya) {
     var distance = 0;
     while (true) {
         x += xa;
@@ -587,7 +610,7 @@ Mario.MapState.prototype.CalcDistance = function(x, y, xa, ya) {
     }
 };
 
-Mario.MapState.prototype.Draw = function(context) {
+Mario.MapState.prototype.Draw = function (context) {
     var x = 0, y = 0;
 
     if (this.WorldNumber === 8) {
@@ -616,22 +639,29 @@ Mario.MapState.prototype.Draw = function(context) {
         }
     }
 
-    if (!Mario.MarioCharacter.Large) {
+    // Safe check for Mario character drawing
+    if (Mario.MarioCharacter && !Mario.MarioCharacter.Large) {
         this.SmallMario.Draw(context, this.camera);
-    } else {
+    } else if (Mario.MarioCharacter) {
         this.LargeMario.Draw(context, this.camera);
     }
 
-    this.Font.Strings[0] = { String: "MARIO " + Mario.MarioCharacter.Lives, X: 4, Y: 4 };
-    this.FontShadow.Strings[0] = { String: "MARIO " + Mario.MarioCharacter.Lives, X: 5, Y: 5 };
+    // Safe check for Mario character lives display
+    var lives = Mario.MarioCharacter ? Mario.MarioCharacter.Lives : 3;
+    this.Font.Strings[0] = { String: "MARIO " + lives, X: 4, Y: 4 };
+    this.FontShadow.Strings[0] = { String: "MARIO " + lives, X: 5, Y: 5 };
     this.Font.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1), X: 256, Y: 4 };
     this.FontShadow.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1), X: 257, Y: 5 };
+
+    // 🏠 Home button indicator
+    this.Font.Strings[2] = { String: "H:HOME", X: 4, Y: 220 };
+    this.FontShadow.Strings[2] = { String: "H:HOME", X: 5, Y: 221 };
 
     this.FontShadow.Draw(context, this.camera);
     this.Font.Draw(context, this.camera);
 };
 
-Mario.MapState.prototype.LevelWon = function() {
+Mario.MapState.prototype.LevelWon = function () {
     var x = this.XMario / 16, y = this.YMario / 16;
     if (this.Data[x][y] === -2) {
         this.NextWorld();
@@ -645,15 +675,19 @@ Mario.MapState.prototype.LevelWon = function() {
     this.RenderStatic();
 };
 
-Mario.MapState.prototype.GetX = function() {
+Mario.MapState.prototype.GetX = function () {
     return 160;
 };
 
-Mario.MapState.prototype.GetY = function() {
+Mario.MapState.prototype.GetY = function () {
     return 120;
 };
 
-Mario.MapState.prototype.CheckForChange = function(context) {
+Mario.MapState.prototype.CheckForChange = function (context) {
+    if (this.GotoTitleState) {
+        context.ChangeState(new Mario.TitleState());
+        return;
+    }
     if (this.WorldNumber === 8) {
         context.ChangeState(new Mario.WinState());
     }

@@ -30,12 +30,15 @@ Mario.LevelState = function (difficulty, type) {
 
     this.GotoMapState = false;
     this.GotoLoseState = false;
+    this.GotoTitleState = false;
+    this.lastKeyPressTime = 0; // Track last key press to prevent rapid toggling
 };
 
 Mario.LevelState.prototype = new Enjine.GameState();
 
 Mario.LevelState.prototype.Enter = function () {
-    var levelGenerator = new Mario.LevelGenerator(320, 15), i = 0, scrollSpeed = 0, w = 0, h = 0, bgLevelGenerator = null;
+    // 🏎️ Shorter levels for quick, addictive gameplay (160 vs 320)
+    var levelGenerator = new Mario.LevelGenerator(160, 15), i = 0, scrollSpeed = 0, w = 0, h = 0, bgLevelGenerator = null;
     this.Level = levelGenerator.CreateLevel(this.LevelType, this.LevelDifficulty);
 
     // Trigger PlaySuper level start tracking
@@ -78,10 +81,21 @@ Mario.LevelState.prototype.Enter = function () {
 
     this.Sprites.Add(Mario.MarioCharacter);
     this.StartTime = 1;
-    this.TimeLeft = 200;
+    this.TimeLeft = 15; // ⚡ Fast-paced 15-second levels for maximum engagement!
+    this.TimerWarning = false; // Track warning state
 
     this.GotoMapState = false;
     this.GotoLoseState = false;
+
+    // 🔄 Reset key press timer when entering level state
+    this.lastKeyPressTime = 0;
+
+    // 🔄 Reset death discount flag for new level attempt
+    if (Mario.MarioCharacter) {
+        Mario.MarioCharacter.DeathDiscountTriggered = false;
+    }
+
+    console.log('✅ Level state entered - key input ready');
 };
 
 Mario.LevelState.prototype.Exit = function () {
@@ -115,9 +129,38 @@ Mario.LevelState.prototype.Update = function (delta) {
 
     this.Delta = delta;
 
+    // 🏠 Check for Home key (H) to return to title screen
+    // Add debouncing to prevent rapid state changes
+    const currentTime = Date.now();
+    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) &&
+        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
+        console.log('🏠 Returning to home screen...');
+        this.lastKeyPressTime = currentTime;
+        // Stop any PlaySuper integration activities
+        if (typeof Mario.playSuperIntegration !== 'undefined') {
+            Mario.playSuperIntegration.onLevelExit();
+        }
+        // Change to title state
+        this.GotoTitleState = true;
+        return;
+    }
+
     this.TimeLeft -= delta;
     if ((this.TimeLeft | 0) === 0) {
-        Mario.MarioCharacter.Die();
+        // Don't trigger death if player is already winning!
+        if (Mario.MarioCharacter.WinTime === 0) {
+            Mario.MarioCharacter.Die();
+        }
+    }
+
+    // ⚠️ Timer warning system for urgency and excitement
+    if (this.TimeLeft <= 5 && !this.TimerWarning) {
+        this.TimerWarning = true;
+        // Play urgency sound to build tension
+        if (typeof Enjine !== 'undefined' && Enjine.Resources) {
+            Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
+        }
+        console.log('⏰ Timer warning: Only', Math.ceil(this.TimeLeft), 'seconds left!');
     }
 
     if (this.StartTime > 0) {
@@ -308,7 +351,24 @@ Mario.LevelState.prototype.Draw = function (context) {
     if (time < 0) {
         time = 0;
     }
-    this.DrawStringShadow(context, " " + time, 34, 1);
+
+    // 🏠 Home button indicator - small and unobtrusive
+    this.DrawStringShadow(context, "H:HOME", 0, 14);
+
+    // 🔥 Visual timer warning - flash red when time is critical
+    if (this.TimerWarning && time <= 5) {
+        // Flash effect - change color every 0.5 seconds for urgency
+        var flashTimer = Date.now() % 1000;
+        if (flashTimer < 500) {
+            // Draw in red for urgency (simulate by drawing multiple times for bold effect)
+            this.DrawStringShadow(context, " " + time, 34, 1);
+            this.DrawStringShadow(context, " " + time, 35, 1); // Double draw for "bold" red effect
+        } else {
+            this.DrawStringShadow(context, " " + time, 34, 1);
+        }
+    } else {
+        this.DrawStringShadow(context, " " + time, 34, 1);
+    }
 
     if (this.StartTime > 0) {
         t = this.StartTime + this.Delta - 2;
@@ -468,11 +528,17 @@ Mario.LevelState.prototype.BumpInto = function (x, y) {
 };
 
 Mario.LevelState.prototype.CheckForChange = function (context) {
-    if (this.GotoLoseState) {
+    if (this.GotoTitleState) {
+        context.ChangeState(new Mario.TitleState());
+    }
+    else if (this.GotoLoseState) {
         context.ChangeState(new Mario.LoseState());
     }
     else {
         if (this.GotoMapState) {
+            // Create a fresh MapState to prevent state corruption issues
+            console.log('🗺️ Creating fresh MapState when returning from level...');
+            Mario.GlobalMapState = new Mario.MapState();
             context.ChangeState(Mario.GlobalMapState);
         }
     }

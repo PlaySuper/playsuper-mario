@@ -4,7 +4,11 @@
 */
 
 Mario.Character = function () {
-    //these are static in Notch's code... here it doesn't seem necessary
+    //these are static in Notch's code... her    this.Visible = (((this.InvulerableTime / 2) | 0) & 1) === 0;
+
+    this.WasOnGround = this.OnGround;
+    // 🎮 Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
+    var sideWaysSpeed = Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.A) ? 1.4 : 0.8;
     this.Large = false;
     this.Fire = false;
     this.Coins = 0;
@@ -37,6 +41,7 @@ Mario.Character = function () {
     this.DeathTime = 0;
     this.WinTime = 0;
     this.InvulnerableTime = 0;
+    this.DeathDiscountTriggered = false;
 
     //Sprite
     this.Carried = null;
@@ -79,6 +84,7 @@ Mario.Character.prototype.Initialize = function (world) {
     this.DeathTime = 0;
     this.WinTime = 0;
     this.InvulnerableTime = 0;
+    this.DeathDiscountTriggered = false;
 
     //Sprite
     this.Carried = null;
@@ -173,7 +179,8 @@ Mario.Character.prototype.Move = function () {
     this.Visible = (((this.InvulerableTime / 2) | 0) & 1) === 0;
 
     this.WasOnGround = this.OnGround;
-    var sideWaysSpeed = Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.A) ? 1.2 : 0.6;
+    // 🎮 Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
+    var sideWaysSpeed = Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.A) ? 1.4 : 0.8;
 
     if (this.OnGround) {
         if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Down) && this.Large) {
@@ -183,10 +190,10 @@ Mario.Character.prototype.Move = function () {
         }
     }
 
-    if (this.Xa > 2) {
+    if (this.Xa > 1.2) {
         this.Facing = 1;
     }
-    if (this.Xa < -2) {
+    if (this.Xa < -1.2) {
         this.Facing = -1;
     }
 
@@ -588,6 +595,7 @@ Mario.Character.prototype.Win = function () {
     this.YDeathPos = this.Y | 0;
     this.World.Paused = true;
     this.WinTime = 1;
+    this.DeathDiscountTriggered = false; // Reset for next level
     Enjine.Resources.PlaySound("exit");
 
     // Trigger PlaySuper reward
@@ -597,12 +605,35 @@ Mario.Character.prototype.Win = function () {
 };
 
 Mario.Character.prototype.Die = function () {
+    // Don't process death if already winning
+    if (this.WinTime > 0) {
+        console.log('Character: Ignoring death because player is winning');
+        return;
+    }
+
+    // Don't trigger discount system multiple times for the same death
+    if (this.DeathDiscountTriggered) {
+        console.log('Character: Death discount already triggered, skipping');
+        return;
+    }
+
     this.XDeathPos = this.X | 0;
     this.YDeathPos = this.Y | 0;
     this.World.Paused = true;
     this.DeathTime = 1;
+    // Don't set DeathDiscountTriggered here - let the discount system handle it
     Enjine.Resources.PlaySound("death");
     this.SetLarge(false, false);
+
+    console.log('🎮 Player died - triggering scratch card reward system...');
+
+    // Trigger discount system on death
+    if (typeof Mario.discountSystem !== 'undefined' && Mario.discountSystem.canGenerateDiscount()) {
+        // Add slight delay to let death animation start
+        setTimeout(() => {
+            Mario.discountSystem.onPlayerDeath();
+        }, 1000);
+    }
 };
 
 Mario.Character.prototype.GetFlower = function () {
