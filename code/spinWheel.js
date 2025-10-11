@@ -214,23 +214,41 @@ Mario.SpinWheel.prototype.drawSector = function (startAngle, endAngle, index) {
  * 🎁 Draw reward content (logo + text)
  */
 Mario.SpinWheel.prototype.drawRewardContent = function (reward, angle, index) {
-    const logoRadius = this.radius * 0.7;
-    const textRadius = this.radius * 0.5;
+    // --- Custom Mario Aesthetic: Brand logo and brandName together, as in provided image ---
+    // Calculate position for logo and text (brandName)
+    const contentRadius = this.radius * 0.65;
+    const logoSize = 38;
+    const textOffset = 30; // distance from logo center to text center
 
-    // Draw brand logo if available
-    if (reward.metadata && reward.metadata.brandLogoImage) {
-        this.drawBrandLogo(reward.metadata.brandLogoImage, angle, logoRadius);
-    } else if (reward.logoUrl) {
-        this.drawBrandLogo(reward.logoUrl, angle, logoRadius);
+    // Draw brand logo (if available) and brandName together, vertically aligned
+    let brandLogoUrl = (reward.metadata && reward.metadata.brandLogoImage) ? reward.metadata.brandLogoImage : reward.logoUrl;
+    let brandName = (reward.metadata && reward.metadata.brandName) ? reward.metadata.brandName : (reward.name || reward.title || 'Mystery Reward');
+
+    // Calculate base position for content (center of sector)
+    const baseX = this.centerX + Math.cos(angle - Math.PI / 2) * contentRadius;
+    const baseY = this.centerY + Math.sin(angle - Math.PI / 2) * contentRadius;
+
+    // Draw logo above text, both rotated to match sector
+    this.context.save();
+    this.context.translate(baseX, baseY);
+    this.context.rotate(angle);
+
+    // Draw logo (centered)
+    if (brandLogoUrl) {
+        this.drawBrandLogoAligned(brandLogoUrl, 0, -logoSize / 2, logoSize);
+    } else {
+        this.drawLogoPlaceholder(0, -logoSize / 2, logoSize);
     }
 
-    // Draw reward text
-    this.drawRewardText(reward, angle, textRadius);
+    // Draw brandName text below logo, not truncated
+    this.drawBrandNameText(brandName, 0, logoSize / 2 + textOffset);
+
+    this.context.restore();
 
     // Special indicator for gift card (guaranteed win) - check if this is the gift card position
     const giftCardPosition = this.guaranteedWinPosition !== undefined ? this.guaranteedWinPosition : 0;
     if (index === giftCardPosition && !this.spinning) {
-        this.drawGiftCardIndicator(angle, logoRadius);
+        this.drawGiftCardIndicator(angle, contentRadius);
     }
 };
 
@@ -238,132 +256,86 @@ Mario.SpinWheel.prototype.drawRewardContent = function (reward, angle, index) {
  * 🏢 Draw brand logo with actual image loading
  * Now properly displays the metadata.brandLogoImage from API
  */
-Mario.SpinWheel.prototype.drawBrandLogo = function (logoUrl, angle, radius) {
+
+// Draw brand logo at (x, y) relative to current context, with circular mask and border
+Mario.SpinWheel.prototype.drawBrandLogoAligned = function (logoUrl, x, y, size) {
     if (!logoUrl) {
-        // Draw placeholder if no logo available
-        this.drawLogoPlaceholder(angle, radius);
+        this.drawLogoPlaceholder(x, y, size);
         return;
     }
-
-    const logoX = this.centerX + Math.cos(angle - Math.PI / 2) * radius;
-    const logoY = this.centerY + Math.sin(angle - Math.PI / 2) * radius;
-
-    // Check if we have a cached image for this logo
     if (!this.logoImages) {
         this.logoImages = new Map();
     }
-
     const cachedImage = this.logoImages.get(logoUrl);
     if (cachedImage && cachedImage.complete) {
-        // Draw the actual brand logo
-        this.context.save();
-        this.context.translate(logoX, logoY);
-        this.context.rotate(angle);
-
         // Draw circular mask for the logo
-        this.context.beginPath();
-        this.context.arc(0, 0, 22, 0, 2 * Math.PI);
-        this.context.clip();
-
-        // Draw the logo image, centered and scaled
-        const logoSize = 40;
-        this.context.drawImage(cachedImage, -logoSize / 2, -logoSize / 2, logoSize, logoSize);
-
-        this.context.restore();
-
-        // Draw border around logo
         this.context.save();
-        this.context.translate(logoX, logoY);
+        this.context.beginPath();
+        this.context.arc(x, y, size / 2, 0, 2 * Math.PI);
+        this.context.clip();
+        this.context.drawImage(cachedImage, x - size / 2, y - size / 2, size, size);
+        this.context.restore();
+        // Draw border
+        this.context.save();
         this.context.strokeStyle = this.borderColor;
         this.context.lineWidth = 2;
         this.context.beginPath();
-        this.context.arc(0, 0, 22, 0, 2 * Math.PI);
+        this.context.arc(x, y, size / 2, 0, 2 * Math.PI);
         this.context.stroke();
         this.context.restore();
     } else {
-        // Draw placeholder while loading
-        this.drawLogoPlaceholder(angle, radius);
-
-        // Load the image if not already loading
+        this.drawLogoPlaceholder(x, y, size);
         if (!cachedImage) {
             const img = new Image();
-            img.crossOrigin = 'anonymous'; // Enable CORS for external images
+            img.crossOrigin = 'anonymous';
             img.onload = () => {
                 this.logoImages.set(logoUrl, img);
-                // Re-render when image loads
                 this.render();
             };
             img.onerror = () => {
                 console.warn('Failed to load brand logo:', logoUrl);
-                // Mark as failed so we don't keep trying
                 this.logoImages.set(logoUrl, null);
             };
-            // Set a placeholder while loading
             this.logoImages.set(logoUrl, { complete: false });
             img.src = logoUrl;
         }
     }
 };
 
-/**
- * 📋 Draw placeholder logo circle
- */
-Mario.SpinWheel.prototype.drawLogoPlaceholder = function (angle, radius) {
-    const logoX = this.centerX + Math.cos(angle - Math.PI / 2) * radius;
-    const logoY = this.centerY + Math.sin(angle - Math.PI / 2) * radius;
 
+// Draw placeholder logo at (x, y) relative to current context
+Mario.SpinWheel.prototype.drawLogoPlaceholder = function (x, y, size) {
     this.context.save();
-    this.context.translate(logoX, logoY);
-    this.context.rotate(angle);
-
-    // Draw placeholder logo circle
-    this.context.fillStyle = 'rgba(255, 255, 255, 0.9)';
     this.context.beginPath();
-    this.context.arc(0, 0, 20, 0, 2 * Math.PI);
+    this.context.arc(x, y, size / 2, 0, 2 * Math.PI);
+    this.context.fillStyle = 'rgba(255,255,255,0.9)';
     this.context.fill();
-
     this.context.strokeStyle = this.borderColor;
     this.context.lineWidth = 2;
     this.context.stroke();
-
-    // Draw generic brand text
+    // Draw generic brand icon
     this.context.fillStyle = this.borderColor;
-    this.context.font = '8px Arial';
+    this.context.font = 'bold 16px Arial';
     this.context.textAlign = 'center';
-    this.context.fillText('🏢', 0, 3);
-
+    this.context.textBaseline = 'middle';
+    this.context.fillText('🏢', x, y + 2);
     this.context.restore();
 };
 
-/**
- * ✨ Draw reward text with smart truncation
- */
-Mario.SpinWheel.prototype.drawRewardText = function (reward, angle, radius) {
-    const textX = this.centerX + Math.cos(angle - Math.PI / 2) * radius;
-    const textY = this.centerY + Math.sin(angle - Math.PI / 2) * radius;
 
+// Draw brandName text at (x, y) relative to current context, no truncation, styled for Mario aesthetic
+Mario.SpinWheel.prototype.drawBrandNameText = function (brandName, x, y) {
     this.context.save();
-    this.context.translate(textX, textY);
-    this.context.rotate(angle);
-
-    // Set text style
-    this.context.fillStyle = this.textColor;
-    this.context.strokeStyle = this.borderColor;
-    this.context.lineWidth = 3;
-    this.context.font = 'bold 12px Arial';
+    // Mario-style font and color (customize as needed for your game aesthetic)
+    this.context.font = 'bold 20px Arial';
+    this.context.fillStyle = '#fff';
+    this.context.strokeStyle = '#222';
+    this.context.lineWidth = 4;
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
-
-    // Smart text truncation
-    let displayName = reward.name || reward.title || 'Mystery Reward';
-    if (displayName.length > 15) {
-        displayName = displayName.substring(0, 12) + '...';
-    }
-
-    // Draw text with outline for readability
-    this.context.strokeText(displayName, 0, 0);
-    this.context.fillText(displayName, 0, 0);
-
+    // Outline for readability
+    this.context.strokeText(brandName, x, y);
+    this.context.fillText(brandName, x, y);
     this.context.restore();
 };
 

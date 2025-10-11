@@ -75,7 +75,7 @@ Mario.PlaySuperIntegration.prototype.init = function () {
             console.log('PlaySuper integration initialized successfully!');
             console.log('Player UUID:', this.playerUUID);
             console.log('Coins per level:', this.rewardsPerLevel);
-            console.log('🎮 Press "T" key to show treasure chest with real rewards!');
+            console.log('Press "T" key to show treasure chest with real rewards!');
 
             // Award welcome coins for new users
             if (createResult && createResult.isNewUser) {
@@ -98,7 +98,7 @@ Mario.PlaySuperIntegration.prototype.getPlayerUUID = function () {
 
         // Mark as new user for welcome coin distribution
         localStorage.setItem('playsuper_new_user', 'true');
-        console.log('🎉 New user detected! Will award welcome coins after registration.');
+        console.log('New user detected! Will award welcome coins after registration.');
     }
 
     return uuid;
@@ -134,7 +134,7 @@ Mario.PlaySuperIntegration.prototype.createPlayer = function () {
             }
 
             // Player was successfully created (status 200/201)
-            console.log('✅ New player created successfully!');
+            console.log('New player created successfully!');
             return response.json().catch(() => ({
                 message: 'Player created',
                 isNewUser: isNewUser

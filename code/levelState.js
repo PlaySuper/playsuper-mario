@@ -81,7 +81,7 @@ Mario.LevelState.prototype.Enter = function () {
 
     this.Sprites.Add(Mario.MarioCharacter);
     this.StartTime = 1;
-    this.TimeLeft = 15; // ⚡ Fast-paced 15-second levels for maximum engagement!
+    this.TimeLeft = 15; // Fast-paced 15-second levels for maximum engagement!
     this.TimerWarning = false; // Track warning state
 
     this.GotoMapState = false;
@@ -95,7 +95,7 @@ Mario.LevelState.prototype.Enter = function () {
         Mario.MarioCharacter.DeathDiscountTriggered = false;
     }
 
-    console.log('✅ Level state entered - key input ready');
+    console.log('Level state entered - key input ready');
 };
 
 Mario.LevelState.prototype.Exit = function () {
@@ -355,7 +355,7 @@ Mario.LevelState.prototype.Draw = function (context) {
     // 🏠 Home button indicator - small and unobtrusive
     this.DrawStringShadow(context, "H:HOME", 0, 14);
 
-    // 🔥 Visual timer warning - flash red when time is critical
+    // Visual timer warning - flash red when time is critical
     if (this.TimerWarning && time <= 5) {
         // Flash effect - change color every 0.5 seconds for urgency
         var flashTimer = Date.now() % 1000;

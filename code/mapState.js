@@ -152,7 +152,7 @@ Mario.MapState.prototype.NextWorld = function () {
 
     // 🔄 Reset key press timer when entering map state
     this.lastKeyPressTime = 0;
-    console.log('✅ Map state entered - key input ready');
+    console.log('Map state entered - key input ready');
 };
 
 Mario.MapState.prototype.GenerateLevel = function () {

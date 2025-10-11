@@ -44,11 +44,11 @@ Mario.TitleState.prototype.Enter = function () {
     this.rewardsFont.Strings[0] = { String: "Press R for Rewards Store", X: 72, Y: 142 }; // 🏪 Centered on background
 
     this.dailyFont = Mario.SpriteCuts.CreateWhiteFont(); // White for maximum contrast
-    this.dailyFont.Strings[0] = { String: "Press D for Daily Rewards", X: 68, Y: 162 }; // 🎁 Centered on background
+    this.dailyFont.Strings[0] = { String: "Press D for Daily Rewards", X: 68, Y: 162 }; // Centered on background
 
     this.logoY = 20;
 
-    // 🎁 Initialize daily rewards system
+    // Initialize daily rewards system
     this.dailyRewards = null;
     this.initializeDailyRewards();
 
@@ -85,7 +85,7 @@ Mario.TitleState.prototype.Enter = function () {
         // Reset any level-specific flags
         Mario.MarioCharacter.LevelString = "";
 
-        console.log('✅ Mario character fully reset for new game session');
+        console.log('Mario character fully reset for new game session');
     }
 
     Mario.PlayTitleMusic();
@@ -102,7 +102,7 @@ Mario.TitleState.prototype.Enter = function () {
         console.log('🎹 Keyboard state cleared');
     }
 
-    console.log('✅ Title state fully initialized - key input ready');
+    console.log('Title state fully initialized - key input ready');
 };
 
 Mario.TitleState.prototype.Exit = function () {
@@ -170,7 +170,7 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
     // Debug keyboard input with debouncing
     if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S) &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🚀 S key pressed - starting game...');
+        console.log('S key pressed - starting game...');
         this.lastKeyPressTime = currentTime;
 
         // Always create a fresh MapState to prevent state corruption issues
@@ -195,10 +195,10 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
         return;
     }
 
-    // 🎁 Daily rewards access with D key (Daily)
+    // Daily rewards access with D key (Daily)
     if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.D) &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🎁 Opening daily rewards...');
+        console.log('Opening daily rewards...');
         this.lastKeyPressTime = currentTime;
         this.showDailyRewards();
         return;
@@ -243,18 +243,18 @@ Mario.TitleState.prototype.cleanupExistingModals = function () {
         Mario.playSuperIntegration.closeStore();
     }
 
-    console.log('✅ Modal cleanup complete');
+    console.log('Modal cleanup complete');
 };
 
 // ============= DAILY REWARDS INTEGRATION =============
 
 /**
- * 🎁 Initialize daily rewards system
+ * Initialize daily rewards system
  */
 Mario.TitleState.prototype.initializeDailyRewards = function () {
     if (typeof Mario.dailyRewards !== 'undefined') {
         this.dailyRewards = Mario.dailyRewards;
-        console.log('🎁 Daily rewards system connected to title screen');
+        console.log('Daily rewards system connected to title screen');
     } else {
         console.warn('⚠️ Daily rewards system not available');
     }
@@ -275,14 +275,14 @@ Mario.TitleState.prototype.showDailyRewards = function () {
         return;
     }
 
-    console.log('🎁 Showing daily rewards modal...');
+    console.log('Showing daily rewards modal...');
 
     // Create beautiful modal overlay
     this.createDailyRewardsModal();
 };
 
 /**
- * 🎨 Create stunning daily rewards modal
+ * Create stunning daily rewards modal
  */
 Mario.TitleState.prototype.createDailyRewardsModal = function () {
     // Remove any existing modal
@@ -327,7 +327,7 @@ Mario.TitleState.prototype.createDailyRewardsModal = function () {
 
     // Add title
     const title = document.createElement('h2');
-    title.innerHTML = '🎁 DAILY REWARDS 🎁';
+    title.innerHTML = 'DAILY REWARDS';
     title.style.cssText = `
         font-family: 'Press Start 2P', 'Courier New', monospace;
         color: #FFD700;
@@ -338,7 +338,7 @@ Mario.TitleState.prototype.createDailyRewardsModal = function () {
 
     // Add description
     const description = document.createElement('p');
-    description.innerHTML = 'Spin the wheel for your guaranteed daily reward!<br/>🎯 <strong>Gift card guaranteed!</strong>';
+    description.innerHTML = 'Spin the wheel for your guaranteed daily reward!<br/><strong>Gift card guaranteed!</strong>';
     description.style.cssText = `
         font-family: 'Press Start 2P', 'Courier New', monospace;
         color: #FFFFFF;
@@ -428,7 +428,7 @@ Mario.TitleState.prototype.handleDailySpin = function (wheelContainer, spinButto
     // Fetch today's rewards and create spin wheel
     this.dailyRewards.fetchDailyRewards()
         .then(spinWheelData => {
-            console.log('🎁 Rewards loaded, creating spin wheel...');
+            console.log('Rewards loaded, creating spin wheel...');
 
             // Create spin wheel with rewards
             const spinWheel = Mario.SpinWheel.createWithRewards(spinWheelData.wheelRewards);
@@ -444,17 +444,17 @@ Mario.TitleState.prototype.handleDailySpin = function (wheelContainer, spinButto
             spinWheel.render();
 
             // Update button to spin
-            spinButton.innerHTML = '🎯 SPIN NOW!';
+            spinButton.innerHTML = 'SPIN NOW!';
             spinButton.disabled = false;
 
             // Update button click handler
             spinButton.onclick = () => {
                 spinButton.disabled = true;
-                spinButton.innerHTML = '🌟 SPINNING...';
+                spinButton.innerHTML = 'SPINNING...';
 
                 // Start the spin!
                 spinWheel.spin((winningReward) => {
-                    console.log('🏆 Spin complete! Won:', winningReward.name);
+                    console.log('Spin complete! Won:', winningReward.name);
 
                     // Process the actual claim
                     this.processDailyClaim(winningReward, spinWheelData);
@@ -462,13 +462,13 @@ Mario.TitleState.prototype.handleDailySpin = function (wheelContainer, spinButto
             };
         })
         .catch(error => {
-            console.error('❌ Failed to load daily rewards:', error);
+            console.error('Failed to load daily rewards:', error);
             this.showDailyRewardsError();
         });
 };
 
 /**
- * 🏆 Process the actual daily claim after spin
+ * Process the actual daily claim after spin
  */
 Mario.TitleState.prototype.processDailyClaim = function (winningReward, spinWheelData) {
     console.log('🏆 Processing daily claim for:', winningReward.name);

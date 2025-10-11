@@ -46,7 +46,7 @@ Mario.DiscountSystem.prototype.canGenerateDiscount = function () {
 
 Mario.DiscountSystem.prototype.onPlayerDeath = function () {
     // Comprehensive check to prevent showing death cards on level completion
-    console.log('🎮 DiscountSystem: onPlayerDeath called - checking state...');
+    console.log('DiscountSystem: onPlayerDeath called - checking state...');
     console.log('- Mario.MarioCharacter.WinTime:', Mario.MarioCharacter ? Mario.MarioCharacter.WinTime : 'undefined');
     console.log('- Mario.MarioCharacter.DeathTime:', Mario.MarioCharacter ? Mario.MarioCharacter.DeathTime : 'undefined');
     console.log('- Mario.MarioCharacter.DeathDiscountTriggered:', Mario.MarioCharacter ? Mario.MarioCharacter.DeathDiscountTriggered : 'undefined');
@@ -55,35 +55,35 @@ Mario.DiscountSystem.prototype.onPlayerDeath = function () {
 
     // Don't show death card if player is winning!
     if (Mario.MarioCharacter && Mario.MarioCharacter.WinTime > 0) {
-        console.log('❌ DiscountSystem: Player is winning, skipping death discount');
+        console.log('DiscountSystem: Player is winning, skipping death discount');
         return;
     }
 
     // Check if discount already triggered for this death
     if (Mario.MarioCharacter && Mario.MarioCharacter.DeathDiscountTriggered) {
-        console.log('❌ DiscountSystem: Death discount already triggered, skipping');
+        console.log('DiscountSystem: Death discount already triggered, skipping');
         return;
     }
 
     // Extra check - don't show if player hasn't actually died
     if (Mario.MarioCharacter && Mario.MarioCharacter.DeathTime === 0) {
-        console.log('❌ DiscountSystem: Player has not actually died (DeathTime=0), skipping');
+        console.log('DiscountSystem: Player has not actually died (DeathTime=0), skipping');
         return;
     }
 
     // Check cooldown
     if (!this.canGenerateDiscount()) {
-        console.log('❌ DiscountSystem: Still in cooldown period, skipping');
+        console.log('DiscountSystem: Still in cooldown period, skipping');
         return;
     }
 
-    console.log('✅ DiscountSystem: All checks passed! Showing Mario-themed scratch card...');
+    console.log('DiscountSystem: All checks passed! Showing Mario-themed scratch card...');
 
     // Show immediate Mario-themed encouragement with scratch card
     this.showMarioScratchCard()
         .then(reward => {
             if (reward) {
-                console.log('✅ Successfully generated reward from scratch card:', reward);
+                console.log('Successfully generated reward from scratch card:', reward);
                 // Mark as triggered after successful scratch card interaction
                 if (Mario.MarioCharacter) {
                     Mario.MarioCharacter.DeathDiscountTriggered = true;
@@ -93,7 +93,7 @@ Mario.DiscountSystem.prototype.onPlayerDeath = function () {
             }
         })
         .catch(error => {
-            console.log('❌ Failed to show scratch card or user skipped:', error);
+            console.log('Failed to show scratch card or user skipped:', error);
             // Even if failed/skipped, mark as triggered to prevent multiple attempts
             if (Mario.MarioCharacter) {
                 Mario.MarioCharacter.DeathDiscountTriggered = true;
@@ -629,7 +629,7 @@ Mario.DiscountSystem.prototype.showGenericEncouragement = function () {
 };
 
 Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
-    console.log('🎮 Showing Mario-themed scratch card for death recovery...');
+    console.log('Showing Mario-themed scratch card for death recovery...');
 
     return new Promise((resolve, reject) => {
         // Create Mario-themed scratch card overlay
@@ -670,7 +670,7 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
             <div style="font-size: 14px; margin-bottom: 20px; color: #DC143C; font-weight: bold;">
                 💥 GAME OVER! 💥
             </div>
-            <div style="font-size: 40px; margin-bottom: 15px;">🎮</div>
+            <div style="font-size: 40px; margin-bottom: 15px;">MARIO</div>
             <div style="font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
                 <div style="color: #228B22; margin-bottom: 10px;">Don't worry if you died!</div>
                 <div style="color: #8B4513;">Here's a real reward scratch card!</div>
@@ -690,7 +690,7 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                 <div style="font-size: 10px; color: #666; margin-bottom: 10px;">SCRATCH TO REVEAL</div>
                 <div style="font-size: 20px; color: #333;">🪙 ? ? ? 🪙</div>
                 <div id="hidden-reward" style="display: none; font-size: 16px; color: #DC143C; margin-top: 10px;">
-                    <div>🎁 DISCOUNT COUPON REWARD! 🎁</div>
+                    <div>DISCOUNT COUPON REWARD!</div>
                     <div id="reward-details" style="font-size: 10px; margin-top: 5px; color: #8B4513;"></div>
                 </div>
             </div>
@@ -782,8 +782,8 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                 hiddenReward.style.display = 'block';
                 hiddenReward.style.animation = 'bounceIn 0.5s ease-out';
 
-                // 🎁 Use PlaySuper API Helper to fetch real non-gift card rewards
-                console.log('🎁 Fetching real reward from PlaySuper API Helper...');
+                // Use PlaySuper API Helper to fetch real non-gift card rewards
+                console.log('Fetching real reward from PlaySuper API Helper...');
 
                 if (!Mario.playSuperAPIHelper || !Mario.playSuperAPIHelper.isInitialized) {
                     console.log('Initializing PlaySuper API Helper...');
@@ -793,12 +793,12 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                 // Fetch rewards with giftCard: false and unique game UUID for scratch cards
                 this.fetchScratchCardRewards()
                     .then(rewards => {
-                        console.log('🎁 Fetched rewards for scratch card:', rewards.length);
+                        console.log('Fetched rewards for scratch card:', rewards.length);
 
                         if (rewards && rewards.length > 0) {
                             // Take the first reward as requested
                             const selectedReward = rewards[0];
-                            console.log('🎯 Selected reward for scratch card:', selectedReward);
+                            console.log('Selected reward for scratch card:', selectedReward);
 
                             // Update the UI with the real reward details
                             rewardDetails.innerHTML = `
@@ -817,7 +817,7 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                                 // Purchase the reward using PlaySuper API Helper
                                 Mario.playSuperAPIHelper.purchaseReward(selectedReward.id)
                                     .then(purchaseResult => {
-                                        console.log('✅ Successfully purchased reward via scratch card:', purchaseResult);
+                                        console.log('Successfully purchased reward via scratch card:', purchaseResult);
                                         this.removeScratchCard(overlay);
                                         resolve({
                                             reward: selectedReward,
@@ -826,7 +826,7 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                                         });
                                     })
                                     .catch(purchaseError => {
-                                        console.error('❌ Failed to purchase reward:', purchaseError);
+                                        console.error('Failed to purchase reward:', purchaseError);
                                         this.removeScratchCard(overlay);
                                         // Still resolve with the reward info even if purchase fails
                                         resolve({
@@ -841,7 +841,7 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
                         }
                     })
                     .catch(error => {
-                        console.warn('❌ Failed to fetch real rewards, showing fallback:', error);
+                        console.warn('Failed to fetch real rewards, showing fallback:', error);
 
                         // Fallback to generic reward
                         rewardDetails.innerHTML = `
@@ -885,11 +885,11 @@ Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
 };
 
 /**
- * 🎯 Fetch rewards specifically for scratch cards with authenticated requests
+ * Fetch rewards specifically for scratch cards with authenticated requests
  * Uses the same auth token as the store for secure, personalized rewards
  */
 Mario.DiscountSystem.prototype.fetchScratchCardRewards = function () {
-    console.log('🎁 Fetching scratch card rewards with unique game UUID...');
+    console.log('Fetching scratch card rewards with unique game UUID...');
 
     if (!this.isInitialized) {
         return Promise.reject(new Error('Discount system not initialized'));
@@ -923,14 +923,14 @@ Mario.DiscountSystem.prototype.fetchScratchCardRewards = function () {
         }
     })
         .then(response => {
-            console.log('🎁 Scratch card rewards fetch response status:', response.status);
+            console.log('Scratch card rewards fetch response status:', response.status);
             if (!response.ok) {
                 throw new Error(`Failed to fetch scratch card rewards: ${response.status}`);
             }
             return response.json();
         })
         .then(responseData => {
-            console.log('🎁 Scratch card rewards API response:', responseData);
+            console.log('Scratch card rewards API response:', responseData);
 
             // Handle the API response structure
             let rewards = [];
@@ -942,11 +942,11 @@ Mario.DiscountSystem.prototype.fetchScratchCardRewards = function () {
                 rewards = responseData;
             }
 
-            console.log('🎯 Processed scratch card rewards:', rewards.length);
+            console.log('Processed scratch card rewards:', rewards.length);
             return rewards;
         })
         .catch(error => {
-            console.error('❌ Failed to fetch scratch card rewards:', error);
+            console.error('Failed to fetch scratch card rewards:', error);
             throw error;
         });
 };

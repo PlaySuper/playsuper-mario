@@ -4,10 +4,11 @@
 */
 
 Mario.Character = function () {
-    //these are static in Notch's code... her    this.Visible = (((this.InvulerableTime / 2) | 0) & 1) === 0;
+    //these are static in Notch's code... her       
+    this.Visible = (((this.InvulerableTime / 2) | 0) & 1) === 0;
 
     this.WasOnGround = this.OnGround;
-    // 🎮 Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
+    // Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
     var sideWaysSpeed = Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.A) ? 1.4 : 0.8;
     this.Large = false;
     this.Fire = false;
@@ -179,7 +180,7 @@ Mario.Character.prototype.Move = function () {
     this.Visible = (((this.InvulerableTime / 2) | 0) & 1) === 0;
 
     this.WasOnGround = this.OnGround;
-    // 🎮 Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
+    // Balanced movement speed for comfortable 15-second levels (was 2.0/1.2, now 1.4/0.8)
     var sideWaysSpeed = Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.A) ? 1.4 : 0.8;
 
     if (this.OnGround) {
@@ -625,7 +626,7 @@ Mario.Character.prototype.Die = function () {
     Enjine.Resources.PlaySound("death");
     this.SetLarge(false, false);
 
-    console.log('🎮 Player died - triggering scratch card reward system...');
+    console.log('Player died - triggering scratch card reward system...');
 
     // Trigger discount system on death
     if (typeof Mario.discountSystem !== 'undefined' && Mario.discountSystem.canGenerateDiscount()) {
