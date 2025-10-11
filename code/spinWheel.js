@@ -26,11 +26,11 @@ Mario.SpinWheel = function (rewards) {
     this.animationId = null;
     this.onSpinComplete = null;
 
-    // Visual properties
-    this.sectorColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3'];
+    // Visual properties - Updated for Mario aesthetic
+    this.sectorColors = ['#D92518', '#F9A035', '#43B047', '#3498DB', '#F8D84A', '#8E44AD']; // Mario-esque colors
     this.textColor = '#FFFFFF';
-    this.borderColor = '#2C3E50';
-    this.arrowColor = '#E74C3C';
+    this.borderColor = '#442416'; // Dark brown for retro outlines
+    this.arrowColor = '#F8D84A'; // Bright yellow for the arrow
 
     console.log('🎲 Spin Wheel initialized with', this.rewards.length, 'rewards');
     this.createCanvas();
@@ -44,9 +44,8 @@ Mario.SpinWheel.prototype.createCanvas = function () {
     this.canvas.height = 400;
     this.context = this.canvas.getContext('2d');
 
-    // Enable smooth rendering
-    this.context.imageSmoothingEnabled = true;
-    this.context.imageSmoothingQuality = 'high';
+    // Disable smoothing for a crisp, pixelated aesthetic
+    this.context.imageSmoothingEnabled = false;
 
     console.log('🎨 Spin wheel canvas created (400x400)');
 };
@@ -215,40 +214,41 @@ Mario.SpinWheel.prototype.drawSector = function (startAngle, endAngle, index) {
  */
 Mario.SpinWheel.prototype.drawRewardContent = function (reward, angle, index) {
     // --- Custom Mario Aesthetic: Brand logo and brandName together, as in provided image ---
-    // Calculate position for logo and text (brandName)
-    const contentRadius = this.radius * 0.65;
+    const logoRadius = this.radius * 0.65;
     const logoSize = 38;
-    const textOffset = 30; // distance from logo center to text center
 
     // Draw brand logo (if available) and brandName together, vertically aligned
     let brandLogoUrl = (reward.metadata && reward.metadata.brandLogoImage) ? reward.metadata.brandLogoImage : reward.logoUrl;
     let brandName = (reward.metadata && reward.metadata.brandName) ? reward.metadata.brandName : (reward.name || reward.title || 'Mystery Reward');
 
-    // Calculate base position for content (center of sector)
-    const baseX = this.centerX + Math.cos(angle - Math.PI / 2) * contentRadius;
-    const baseY = this.centerY + Math.sin(angle - Math.PI / 2) * contentRadius;
+    // --- LOGO ---
+    // Calculate position for the logo
+    const logoX = this.centerX + Math.cos(angle) * logoRadius;
+    const logoY = this.centerY + Math.sin(angle) * logoRadius;
 
-    // Draw logo above text, both rotated to match sector
+    // Draw logo, rotated to match sector
     this.context.save();
-    this.context.translate(baseX, baseY);
-    this.context.rotate(angle);
-
-    // Draw logo (centered)
+    this.context.translate(logoX, logoY);
+    this.context.rotate(angle + Math.PI / 2); // Rotate logo to be upright within sector
     if (brandLogoUrl) {
-        this.drawBrandLogoAligned(brandLogoUrl, 0, -logoSize / 2, logoSize);
+        this.drawBrandLogoAligned(brandLogoUrl, 0, 0, logoSize);
     } else {
-        this.drawLogoPlaceholder(0, -logoSize / 2, logoSize);
+        this.drawLogoPlaceholder(0, 0, logoSize);
     }
-
-    // Draw brandName text below logo, not truncated
-    this.drawBrandNameText(brandName, 0, logoSize / 2 + textOffset);
-
     this.context.restore();
+
+
+    // --- TEXT ---
+    // Draw brandName text curved below the logo
+    const textRadius = this.radius * 0.45;
+    this.drawCurvedBrandNameText(brandName, angle, textRadius);
+
 
     // Special indicator for gift card (guaranteed win) - check if this is the gift card position
     const giftCardPosition = this.guaranteedWinPosition !== undefined ? this.guaranteedWinPosition : 0;
     if (index === giftCardPosition && !this.spinning) {
-        this.drawGiftCardIndicator(angle, contentRadius);
+        // Draw the indicator slightly outside the logo
+        this.drawGiftCardIndicator(angle, logoRadius);
     }
 };
 
@@ -323,6 +323,46 @@ Mario.SpinWheel.prototype.drawLogoPlaceholder = function (x, y, size) {
 };
 
 
+/**
+ * ✍️ Draw brandName text along a curve for the retro game aesthetic
+ * This ensures the text is not truncated and follows the wheel's curve.
+ */
+Mario.SpinWheel.prototype.drawCurvedBrandNameText = function (text, angle, radius) {
+    this.context.save();
+    this.context.font = 'bold 16px "Press Start 2P", monospace';
+    this.context.fillStyle = this.textColor;
+    this.context.strokeStyle = this.borderColor;
+    this.context.lineWidth = 4;
+    this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
+
+    // Move to the center of the wheel to establish a rotation point
+    this.context.translate(this.centerX, this.centerY);
+
+    // Spread the text across an angle of about 60 degrees in the sector
+    const arc = Math.PI / 3;
+    const totalAngle = text.length > 1 ? arc : 0;
+    const startAngle = angle - totalAngle / 2;
+
+    for (let i = 0; i < text.length; i++) {
+        const charAngle = startAngle + (i / (text.length - 1)) * totalAngle;
+        const x = Math.cos(charAngle) * radius;
+        const y = Math.sin(charAngle) * radius;
+
+        this.context.save();
+        this.context.translate(x, y);
+        this.context.rotate(charAngle + Math.PI / 2); // Orient character upright
+
+        // Draw outline and then the character
+        this.context.strokeText(text[i], 0, 0);
+        this.context.fillText(text[i], 0, 0);
+        this.context.restore();
+    }
+
+    this.context.restore();
+};
+
+
 // Draw brandName text at (x, y) relative to current context, no truncation, styled for Mario aesthetic
 Mario.SpinWheel.prototype.drawBrandNameText = function (brandName, x, y) {
     this.context.save();
@@ -343,18 +383,18 @@ Mario.SpinWheel.prototype.drawBrandNameText = function (brandName, x, y) {
  * 🎁 Special indicator for guaranteed gift card
  */
 Mario.SpinWheel.prototype.drawGiftCardIndicator = function (angle, radius) {
-    const indicatorX = this.centerX + Math.cos(angle - Math.PI / 2) * (radius + 25);
-    const indicatorY = this.centerY + Math.sin(angle - Math.PI / 2) * (radius + 25);
+    const indicatorX = this.centerX + Math.cos(angle) * (radius + 25);
+    const indicatorY = this.centerY + Math.sin(angle) * (radius + 25);
 
     this.context.save();
     this.context.translate(indicatorX, indicatorY);
 
-    // Draw golden star indicator
-    this.context.fillStyle = '#FFD700';
-    this.context.strokeStyle = '#FFA500';
+    // Draw golden star indicator - now more vibrant
+    this.context.fillStyle = '#F8D84A';
+    this.context.strokeStyle = '#F9A035';
     this.context.lineWidth = 2;
 
-    this.drawStar(0, 0, 8, 5, 3);
+    this.drawStar(0, 0, 10, 4, 5); // 5-point star
     this.context.fill();
     this.context.stroke();
 
@@ -369,7 +409,8 @@ Mario.SpinWheel.prototype.drawStar = function (x, y, outerRadius, innerRadius, p
 
     for (let i = 0; i < points * 2; i++) {
         const radius = i % 2 === 0 ? outerRadius : innerRadius;
-        const angle = (i * Math.PI) / points;
+        // Correct angle calculation to make the star point upwards
+        const angle = (i * Math.PI) / points - (Math.PI / 2);
         const starX = x + radius * Math.cos(angle);
         const starY = y + radius * Math.sin(angle);
 
@@ -387,20 +428,23 @@ Mario.SpinWheel.prototype.drawStar = function (x, y, outerRadius, innerRadius, p
  * ⚪ Draw center hub with beautiful styling
  */
 Mario.SpinWheel.prototype.drawCenterHub = function () {
-    // Outer ring
-    this.context.fillStyle = '#34495E';
+    // Outer ring (like a Mario block)
+    this.context.fillStyle = '#F9A035'; // Orange-brown
+    this.context.strokeStyle = this.borderColor;
+    this.context.lineWidth = 4;
     this.context.beginPath();
     this.context.arc(this.centerX, this.centerY, 35, 0, 2 * Math.PI);
     this.context.fill();
+    this.context.stroke();
 
     // Inner ring
-    this.context.fillStyle = '#2C3E50';
+    this.context.fillStyle = '#D92518'; // Red center
     this.context.beginPath();
     this.context.arc(this.centerX, this.centerY, 25, 0, 2 * Math.PI);
     this.context.fill();
 
-    // Center dot
-    this.context.fillStyle = '#ECF0F1';
+    // Center dot (like a bolt)
+    this.context.fillStyle = this.borderColor;
     this.context.beginPath();
     this.context.arc(this.centerX, this.centerY, 8, 0, 2 * Math.PI);
     this.context.fill();
@@ -414,21 +458,19 @@ Mario.SpinWheel.prototype.drawArrow = function () {
 
     // Position arrow at top center, pointing down to wheel
     const arrowX = this.centerX;
-    const arrowY = this.centerY - this.radius - 20;
+    const arrowY = this.centerY - this.radius - 15; // A bit closer
+    const arrowHeight = 25;
+    const arrowWidth = 20;
 
     this.context.fillStyle = this.arrowColor;
-    this.context.strokeStyle = '#C0392B';
-    this.context.lineWidth = 2;
+    this.context.strokeStyle = this.borderColor;
+    this.context.lineWidth = 4;
 
-    // Draw arrow shape
+    // Draw chunky, simple arrow shape
     this.context.beginPath();
-    this.context.moveTo(arrowX, arrowY + 25); // Tip
-    this.context.lineTo(arrowX - 15, arrowY); // Left wing
-    this.context.lineTo(arrowX - 8, arrowY); // Left inner
-    this.context.lineTo(arrowX - 8, arrowY - 10); // Left top
-    this.context.lineTo(arrowX + 8, arrowY - 10); // Right top
-    this.context.lineTo(arrowX + 8, arrowY); // Right inner
-    this.context.lineTo(arrowX + 15, arrowY); // Right wing
+    this.context.moveTo(arrowX, arrowY + arrowHeight); // Tip
+    this.context.lineTo(arrowX - arrowWidth, arrowY); // Left corner
+    this.context.lineTo(arrowX + arrowWidth, arrowY); // Right corner
     this.context.closePath();
 
     this.context.fill();
@@ -442,17 +484,10 @@ Mario.SpinWheel.prototype.drawArrow = function () {
  */
 Mario.SpinWheel.prototype.drawOuterRim = function () {
     // Outer decorative ring
-    this.context.strokeStyle = '#2C3E50';
-    this.context.lineWidth = 8;
+    this.context.strokeStyle = this.borderColor;
+    this.context.lineWidth = 10; // Thicker for a chunkier feel
     this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, this.radius + 4, 0, 2 * Math.PI);
-    this.context.stroke();
-
-    // Inner rim
-    this.context.strokeStyle = '#34495E';
-    this.context.lineWidth = 3;
-    this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, this.radius, 0, 2 * Math.PI);
+    this.context.arc(this.centerX, this.centerY, this.radius + 5, 0, 2 * Math.PI);
     this.context.stroke();
 };
 
@@ -566,37 +601,36 @@ Mario.SpinWheel.createWithRewards = function (rewards) {
         rewards = rewards.slice(0, 6);
     }
 
-    // 🎯 Shuffle rewards visually while tracking gift card position
-    const giftCardIndex = rewards.findIndex(reward =>
-        reward.type === 'giftCard' ||
-        (reward.metadata && reward.metadata.type === 'giftCard') ||
-        reward.giftCard === true
-    );
-
-    // Create a shuffled array for visual display
+    // Shuffle rewards visually
     const shuffledRewards = [...rewards];
-
-    // Simple shuffle algorithm (Fisher-Yates)
     for (let i = shuffledRewards.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffledRewards[i], shuffledRewards[j]] = [shuffledRewards[j], shuffledRewards[i]];
     }
 
-    // Find where the gift card ended up after shuffling
-    const newGiftCardPosition = shuffledRewards.findIndex(reward =>
-        reward.type === 'giftCard' ||
-        (reward.metadata && reward.metadata.type === 'giftCard') ||
-        reward.giftCard === true
-    );
+    // Find the index of the reward with brandName 'flipkart' (case-insensitive)
+    const flipkartIndex = shuffledRewards.findIndex(reward => {
+        if (reward.metadata && reward.metadata.brandName) {
+            return reward.metadata.brandName.toLowerCase() === 'flipkart';
+        }
+        if (reward.name) {
+            return reward.name.toLowerCase() === 'flipkart';
+        }
+        return false;
+    });
+
+    if (flipkartIndex === -1) {
+        console.error('❌ No reward with brandName "flipkart" found! The wheel will not guarantee flipkart win.');
+    }
+
+    // Always set guaranteedWinPosition to flipkartIndex (if found), else fallback to 0
+    const guaranteedWinPosition = flipkartIndex !== -1 ? flipkartIndex : 0;
 
     console.log('🎲 Creating spin wheel with', shuffledRewards.length, 'shuffled rewards');
-    console.log('🎯 Gift card positioned at segment:', newGiftCardPosition);
+    console.log('🎯 Flipkart positioned at segment:', guaranteedWinPosition);
 
     const spinWheel = new Mario.SpinWheel(shuffledRewards);
-
-    // Store the gift card position for guaranteed win
-    spinWheel.guaranteedWinPosition = newGiftCardPosition;
-
+    spinWheel.guaranteedWinPosition = guaranteedWinPosition;
     return spinWheel;
 };
 

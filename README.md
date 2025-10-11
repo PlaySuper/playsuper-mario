@@ -12,6 +12,8 @@ This is a PlaySuper-integrated version of the classic Infinite Mario game, enhan
 
 ### 🏆 PlaySuper Integration
 - **Real Coin Distribution**: Earn PlaySuper coins while playing
+- **Daily Rewards**: Spin a wheel every day for a guaranteed gift card prize.
+- **Scratch Card on Death**: Get a second chance with a scratch card reward when you lose a life.
 - **Treasure Chest System**: Choose mystery rewards after level completion
 - **Welcome Coins**: New players receive starter coins
 - **Live Rewards**: Redeem coins for real products and services
@@ -24,7 +26,8 @@ This is a PlaySuper-integrated version of the classic Infinite Mario game, enhan
 2. Configure PlaySuper credentials (API key, Coin ID, etc.)
 3. Start playing and earning coins!
 4. Press `T` to test the treasure chest feature
-5. Complete levels to earn coins and unlock rewards
+5. Press `H` to return to the main menu at any time.
+6. Complete levels to earn coins and unlock rewards
 
 ## 🎯 How It Works
 

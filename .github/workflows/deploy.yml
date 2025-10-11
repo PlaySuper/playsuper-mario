@@ -35,7 +35,7 @@ jobs:
         with:
           bucket: ${{ secrets.AWS_S3_BUCKET }}
           region: ${{ secrets.AWS_REGION }}
-          source-dir: ./mariohtml5
+          source-dir: .
           dest-dir: /
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
