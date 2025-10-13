@@ -109,37 +109,46 @@ Mario.SpinWheel.prototype.spin = function (callback) {
 
     console.log('🎯 Spinning to guaranteed gift card at position:', giftCardPosition);
 
-    // Create dramatic tension with multiple spins
-    const baseSpins = 3 + Math.random() * 2; // 3-5 full rotations
-    const finalSpins = Math.floor(baseSpins);
-    const extraRotation = (baseSpins - finalSpins) * 360;
+    // Create dramatic tension with multiple spins (3-5 full rotations)
+    const fullSpins = 3 + Math.floor(Math.random() * 3); // 3, 4, or 5 full spins
 
-    // Calculate exact landing position for Flipkart - simple degrees approach
+    // Calculate exact landing position for Flipkart
     const flipkartCenterAngle = giftCardPosition * sectorAngle + sectorAngle / 2;
 
-    // Arrow points up at 270° (12 o'clock position)
-    const arrowAngle = 270;
+    // Calculate where we need to END UP (mod 360°) to align with arrow at 270°
+    let finalTargetRotation = 270 - flipkartCenterAngle;
 
-    // Calculate rotation needed: flipkartCenter + rotation = 270°
-    let rotationNeeded = arrowAngle - flipkartCenterAngle;
-
-    // Normalize to positive rotation (0-360 range), but 0 is valid!
-    while (rotationNeeded < 0) {
-        rotationNeeded += 360;
+    // Normalize final target to 0-360° range
+    while (finalTargetRotation < 0) {
+        finalTargetRotation += 360;
     }
-    while (rotationNeeded >= 360) {
-        rotationNeeded -= 360;
+    while (finalTargetRotation >= 360) {
+        finalTargetRotation -= 360;
     }
 
-    // Target rotation with dramatic spins
-    this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation + rotationNeeded;
+    // Calculate how much MORE to rotate from current position
+    let additionalRotation = finalTargetRotation - (this.rotation % 360);
+
+    // Normalize additional rotation to positive
+    while (additionalRotation < 0) {
+        additionalRotation += 360;
+    }
+    while (additionalRotation >= 360) {
+        additionalRotation -= 360;
+    }
+
+    // Target rotation: current + full dramatic spins + exact additional amount needed
+    this.targetRotation = this.rotation + (fullSpins * 360) + additionalRotation;
 
     console.log('Flipkart at position:', giftCardPosition, 'of', this.rewards.length);
     console.log('Flipkart sector center angle:', flipkartCenterAngle + '°');
-    console.log('Arrow angle:', arrowAngle + '°');
-    console.log('Raw rotation needed:', (arrowAngle - flipkartCenterAngle) + '°');
-    console.log('Normalized rotation needed:', rotationNeeded + '°');
-    console.log('Final target rotation:', this.targetRotation + '° (landing on Flipkart at position', giftCardPosition, ')');
+    console.log('Current rotation:', this.rotation + '°');
+    console.log('Current rotation (mod 360):', (this.rotation % 360) + '°');
+    console.log('Final target rotation (mod 360):', finalTargetRotation + '°');
+    console.log('Additional rotation needed:', additionalRotation + '°');
+    console.log('Full spins for drama:', fullSpins);
+    console.log('Final target rotation:', this.targetRotation + '° (should land on Flipkart at position', giftCardPosition, ')');
+    console.log('Expected final position (mod 360):', (this.targetRotation % 360) + '° (should equal', finalTargetRotation + '°)');
 
     // Start the beautiful animation
     this.animateSpinning();
@@ -595,6 +604,7 @@ Mario.SpinWheel.prototype.getWinningReward = function () {
 
     const giftCardPosition = this.guaranteedWinPosition !== undefined ? this.guaranteedWinPosition : 0;
 
+    console.log('=== WINNING CALCULATION ===');
     console.log('Final rotation:', this.rotation + '°');
     console.log('Normalized rotation:', normalizedRotation + '°');
     console.log('Arrow angle:', arrowAngle + '°');
