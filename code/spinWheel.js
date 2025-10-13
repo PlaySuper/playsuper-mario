@@ -120,8 +120,9 @@ Mario.SpinWheel.prototype.spin = function (callback) {
     const arrowOffset = 90; // Arrow points north (up)
 
     // Target rotation to land gift card under the arrow
+    // We need to align the MIDDLE of the sector with the arrow.
     this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation +
-        (360 - giftCardAngle - arrowOffset);
+        (360 - (giftCardAngle + sectorAngle / 2) - arrowOffset);
 
     console.log('🎯 Target rotation calculated:', this.targetRotation, '(landing on gift card at position', giftCardPosition, ')');
 
@@ -558,11 +559,12 @@ Mario.SpinWheel.prototype.playWinSound = function () {
  */
 Mario.SpinWheel.prototype.getWinningReward = function () {
     // Calculate which segment the arrow is pointing to
-    const normalizedRotation = this.rotation % 360;
+    const normalizedRotation = (this.rotation % 360 + 360) % 360; // Ensure positive
     const sectorAngle = 360 / this.rewards.length;
 
-    // Arrow points up (0 degrees), so we calculate from there
-    let winningIndex = Math.floor((360 - normalizedRotation + 90) / sectorAngle) % this.rewards.length;
+    // Arrow points up (270 degrees). We find what angle on the wheel is at 270.
+    const pointerAngle = (270 - normalizedRotation + 360) % 360;
+    let winningIndex = Math.floor(pointerAngle / sectorAngle);
 
     // Ensure we always return the gift card (at guaranteed position)
     const giftCardPosition = this.guaranteedWinPosition !== undefined ? this.guaranteedWinPosition : 0;
