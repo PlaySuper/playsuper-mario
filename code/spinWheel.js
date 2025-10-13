@@ -114,17 +114,26 @@ Mario.SpinWheel.prototype.spin = function (callback) {
     const finalSpins = Math.floor(baseSpins);
     const extraRotation = (baseSpins - finalSpins) * 360;
 
-    // Calculate exact landing position for gift card
-    // Arrow points up (north), so we need to account for that
+    // Calculate exact landing position for Flipkart
     const giftCardAngle = giftCardPosition * sectorAngle;
-    const arrowOffset = 90; // Arrow points north (up)
+    const targetAngleForFlipkart = 270; // Arrow points up (north)
+    const flipkartSectorCenter = giftCardPosition * sectorAngle + sectorAngle / 2;
 
-    // Target rotation to land gift card under the arrow
-    // We need to align the MIDDLE of the sector with the arrow.
-    this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation +
-        (360 - (giftCardAngle + sectorAngle / 2) - arrowOffset);
+    // Calculate how much we need to rotate to align Flipkart sector center with arrow
+    let rotationNeeded = targetAngleForFlipkart - flipkartSectorCenter;
 
-    console.log('🎯 Target rotation calculated:', this.targetRotation, '(landing on gift card at position', giftCardPosition, ')');
+    // Normalize to positive rotation  
+    while (rotationNeeded <= 0) {
+        rotationNeeded += 360;
+    }
+
+    // Target rotation with dramatic spins
+    this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation + rotationNeeded;
+
+    console.log('Flipkart at position:', giftCardPosition, 'of', this.rewards.length);
+    console.log('Flipkart sector center angle:', flipkartSectorCenter);
+    console.log('Rotation needed to align with arrow:', rotationNeeded);
+    console.log('Final target rotation:', this.targetRotation, '(landing on Flipkart at position', giftCardPosition, ')');
 
     // Start the beautiful animation
     this.animateSpinning();
