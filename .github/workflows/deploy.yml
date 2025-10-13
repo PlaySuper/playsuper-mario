@@ -34,8 +34,4 @@ jobs:
             --exclude ".DS_Store"
 
       - name: Trigger Amplify Deploy
-        run: |
-          aws amplify start-deployment \
-            --app-id ${{ secrets.AMPLIFY_APP_ID }} \
-            --branch-name ${{ secrets.AMPLIFY_BRANCH_NAME }} \
-            --source-url s3://${{ secrets.AWS_S3_BUCKET }}
+        run: aws amplify start-deployment --app-id ${{ secrets.AMPLIFY_APP_ID }} --branch-name ${{ secrets.AMPLIFY_BRANCH_NAME }} --source-url s3://${{ secrets.AWS_S3_BUCKET }} --source-url-type BUCKET_PREFIX
