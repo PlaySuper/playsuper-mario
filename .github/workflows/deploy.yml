@@ -7,47 +7,28 @@ on:
       - ajay/ps-integration
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: '18'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install dependencies (if any)
+      - name: Upload to S3 using AWS CLI
         run: |
-          if [ -f package.json ]; then npm ci; fi
-
-      - name: Build project (if needed)
-        run: |
-          if [ -f package.json ]; then npm run build || true; fi
-
-      - name: Zip project
-        run: |
-          zip -r build-artifact.zip mariohtml5
-
-      - name: Upload to S3
-        uses: aws-actions/s3-sync@v2
-        with:
-          bucket: ${{ secrets.AWS_S3_BUCKET }}
-          region: ${{ secrets.AWS_REGION }}
-          source-dir: .
-          dest-dir: /
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws s3 sync . s3://${{ secrets.AWS_S3_BUCKET }} --delete
 
       - name: Trigger Amplify Deploy
         run: |
           aws amplify start-deployment \
             --app-id ${{ secrets.AMPLIFY_APP_ID }} \
-            --branch-name ${{ secrets.AMPLIFY_BRANCH_NAME }} \
-            --source-url s3://${{ secrets.AWS_S3_BUCKET }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+            --branch-name ${{ secrets.AMPLIFY_BRANCH_NAME }}
