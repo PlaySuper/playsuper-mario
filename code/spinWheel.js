@@ -123,11 +123,11 @@ Mario.SpinWheel.prototype.spin = function (callback) {
     // Calculate rotation needed: flipkartCenter + rotation = 270°
     let rotationNeeded = arrowAngle - flipkartCenterAngle;
 
-    // Normalize to positive rotation (0-360 range)
-    while (rotationNeeded <= 0) {
+    // Normalize to positive rotation (0-360 range), but 0 is valid!
+    while (rotationNeeded < 0) {
         rotationNeeded += 360;
     }
-    while (rotationNeeded > 360) {
+    while (rotationNeeded >= 360) {
         rotationNeeded -= 360;
     }
 
@@ -137,7 +137,8 @@ Mario.SpinWheel.prototype.spin = function (callback) {
     console.log('Flipkart at position:', giftCardPosition, 'of', this.rewards.length);
     console.log('Flipkart sector center angle:', flipkartCenterAngle + '°');
     console.log('Arrow angle:', arrowAngle + '°');
-    console.log('Rotation needed:', rotationNeeded + '°');
+    console.log('Raw rotation needed:', (arrowAngle - flipkartCenterAngle) + '°');
+    console.log('Normalized rotation needed:', rotationNeeded + '°');
     console.log('Final target rotation:', this.targetRotation + '° (landing on Flipkart at position', giftCardPosition, ')');
 
     // Start the beautiful animation
