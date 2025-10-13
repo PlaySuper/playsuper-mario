@@ -114,25 +114,32 @@ Mario.SpinWheel.prototype.spin = function (callback) {
     const finalSpins = Math.floor(baseSpins);
     const extraRotation = (baseSpins - finalSpins) * 360;
 
-    // Calculate exact landing position for Flipkart
-    const giftCardAngle = giftCardPosition * sectorAngle;
-    const targetAngleForFlipkart = 270; // Arrow points up (north)
-    const flipkartSectorCenter = giftCardPosition * sectorAngle + sectorAngle / 2;
+    // Calculate exact landing position for Flipkart - using RADIANS to match rendering
+    const sectorAngleRad = (2 * Math.PI) / this.rewards.length;
+    const flipkartSectorCenterRad = giftCardPosition * sectorAngleRad + sectorAngleRad / 2;
 
-    // Calculate how much we need to rotate to align Flipkart sector center with arrow
-    let rotationNeeded = targetAngleForFlipkart - flipkartSectorCenter;
+    // Arrow points up (12 o'clock) = -π/2 radians (or 3π/2)
+    const arrowAngleRad = -Math.PI / 2;
 
-    // Normalize to positive rotation  
-    while (rotationNeeded <= 0) {
-        rotationNeeded += 360;
+    // Calculate rotation needed to align Flipkart center with arrow (in radians)
+    let rotationNeededRad = arrowAngleRad - flipkartSectorCenterRad;
+
+    // Normalize to positive rotation in radians
+    while (rotationNeededRad <= 0) {
+        rotationNeededRad += 2 * Math.PI;
     }
 
+    // Convert back to degrees for the animation system
+    const rotationNeededDeg = rotationNeededRad * (180 / Math.PI);
+
     // Target rotation with dramatic spins
-    this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation + rotationNeeded;
+    this.targetRotation = this.rotation + (finalSpins * 360) + extraRotation + rotationNeededDeg;
 
     console.log('Flipkart at position:', giftCardPosition, 'of', this.rewards.length);
-    console.log('Flipkart sector center angle:', flipkartSectorCenter);
-    console.log('Rotation needed to align with arrow:', rotationNeeded);
+    console.log('Flipkart sector center (radians):', flipkartSectorCenterRad);
+    console.log('Flipkart sector center (degrees):', flipkartSectorCenterRad * (180 / Math.PI));
+    console.log('Arrow angle (radians):', arrowAngleRad);
+    console.log('Rotation needed (degrees):', rotationNeededDeg);
     console.log('Final target rotation:', this.targetRotation, '(landing on Flipkart at position', giftCardPosition, ')');
 
     // Start the beautiful animation
@@ -578,12 +585,18 @@ Mario.SpinWheel.prototype.getWinningReward = function () {
     // Ensure we always return the gift card (at guaranteed position)
     const giftCardPosition = this.guaranteedWinPosition !== undefined ? this.guaranteedWinPosition : 0;
 
+    console.log('Final rotation:', this.rotation);
+    console.log('Normalized rotation:', normalizedRotation);
+    console.log('Pointer angle:', pointerAngle);
+    console.log('Calculated winning index:', winningIndex);
+    console.log('Expected Flipkart position:', giftCardPosition);
+
     if (winningIndex !== giftCardPosition) {
-        console.warn(`⚠️ Calculation: arrow points to ${winningIndex} but gift card is at ${giftCardPosition}. Ensuring gift card win...`);
+        console.warn(`⚠️ Calculation: arrow points to ${winningIndex} but Flipkart is at ${giftCardPosition}. Ensuring Flipkart win...`);
         winningIndex = giftCardPosition;
     }
 
-    console.log('🏆 Winning reward at position:', winningIndex, this.rewards[winningIndex].name);
+    console.log('🏆 Final winning reward at position:', winningIndex, this.rewards[winningIndex].name);
     return this.rewards[winningIndex];
 };
 
