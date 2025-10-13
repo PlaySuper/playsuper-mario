@@ -29,6 +29,7 @@ This is a PlaySuper-integrated version of the classic Infinite Mario game, enhan
 5. Press `H` to return to the main menu at any time.
 6. Complete levels to earn coins and unlock rewards
 
+
 ## 🎯 How It Works
 
 - **Timer-Based Distribution**: Coins are distributed every 10 seconds during gameplay
