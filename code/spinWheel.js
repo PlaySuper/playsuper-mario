@@ -26,11 +26,44 @@ Mario.SpinWheel = function (rewards) {
     this.animationId = null;
     this.onSpinComplete = null;
 
-    // Visual properties - Updated for Mario aesthetic
-    this.sectorColors = ['#D92518', '#F9A035', '#43B047', '#3498DB', '#F8D84A', '#8E44AD']; // Mario-esque colors
-    this.textColor = '#FFFFFF';
-    this.borderColor = '#442416'; // Dark brown for retro outlines
-    this.arrowColor = '#F8D84A'; // Bright yellow for the arrow
+    // Centralized configuration for easier theming and tweaking
+    this.config = {
+        sectorColors: ['#D92518', '#F9A035', '#43B047', '#3498DB', '#F8D84A', '#8E44AD'],
+        textColor: '#FFFFFF',
+        borderColor: '#442416',
+        arrowColor: '#F8D84A',
+        font: 'bold 16px "Press Start 2P", monospace',
+        placeholderFont: 'bold 24px "Press Start 2P", monospace',
+        logoSize: 38,
+        textRadiusFactor: 0.45,
+        logoRadiusFactor: 0.65,
+        starIndicator: {
+            fill: '#F8D84A',
+            stroke: '#F9A035',
+            lineWidth: 2,
+            outerRadius: 10,
+            innerRadius: 4,
+            points: 5
+        },
+        arrow: {
+            height: 25,
+            width: 20,
+            lineWidth: 4,
+            offsetY: 15
+        },
+        rim: {
+            lineWidth: 10,
+            offset: 5
+        },
+        centerHub: {
+            outerRingFill: '#F9A035',
+            innerRingFill: '#D92518',
+            lineWidth: 4,
+            outerRadius: 35,
+            innerRadius: 25,
+            dotRadius: 8
+        }
+    };
 
     console.log('🎲 Spin Wheel initialized with', this.rewards.length, 'rewards');
     this.createCanvas();
@@ -191,8 +224,8 @@ Mario.SpinWheel.prototype.drawSector = function (startAngle, endAngle, index) {
     this.context.save();
 
     // Alternating sector colors for visual appeal
-    const colorIndex = index % this.sectorColors.length;
-    this.context.fillStyle = this.sectorColors[colorIndex];
+    const colorIndex = index % this.config.sectorColors.length;
+    this.context.fillStyle = this.config.sectorColors[colorIndex];
 
     // Draw sector
     this.context.beginPath();
@@ -202,7 +235,7 @@ Mario.SpinWheel.prototype.drawSector = function (startAngle, endAngle, index) {
     this.context.fill();
 
     // Draw sector border
-    this.context.strokeStyle = this.borderColor;
+    this.context.strokeStyle = this.config.borderColor;
     this.context.lineWidth = 2;
     this.context.stroke();
 
@@ -214,8 +247,8 @@ Mario.SpinWheel.prototype.drawSector = function (startAngle, endAngle, index) {
  */
 Mario.SpinWheel.prototype.drawRewardContent = function (reward, angle, index) {
     // --- Custom Mario Aesthetic: Brand logo and brandName together, as in provided image ---
-    const logoRadius = this.radius * 0.65;
-    const logoSize = 38;
+    const logoRadius = this.radius * this.config.logoRadiusFactor;
+    const logoSize = this.config.logoSize;
 
     // Draw brand logo (if available) and brandName together, vertically aligned
     let brandLogoUrl = (reward.metadata && reward.metadata.brandLogoImage) ? reward.metadata.brandLogoImage : reward.logoUrl;
@@ -240,7 +273,7 @@ Mario.SpinWheel.prototype.drawRewardContent = function (reward, angle, index) {
 
     // --- TEXT ---
     // Draw brandName text curved below the logo
-    const textRadius = this.radius * 0.45;
+    const textRadius = this.radius * this.config.textRadiusFactor;
     this.drawCurvedBrandNameText(brandName, angle, textRadius);
 
 
@@ -277,7 +310,7 @@ Mario.SpinWheel.prototype.drawBrandLogoAligned = function (logoUrl, x, y, size) 
         this.context.restore();
         // Draw border
         this.context.save();
-        this.context.strokeStyle = this.borderColor;
+        this.context.strokeStyle = this.config.borderColor;
         this.context.lineWidth = 2;
         this.context.beginPath();
         this.context.arc(x, y, size / 2, 0, 2 * Math.PI);
@@ -310,15 +343,15 @@ Mario.SpinWheel.prototype.drawLogoPlaceholder = function (x, y, size) {
     this.context.arc(x, y, size / 2, 0, 2 * Math.PI);
     this.context.fillStyle = 'rgba(255,255,255,0.9)';
     this.context.fill();
-    this.context.strokeStyle = this.borderColor;
+    this.context.strokeStyle = this.config.borderColor;
     this.context.lineWidth = 2;
     this.context.stroke();
-    // Draw generic brand icon
-    this.context.fillStyle = this.borderColor;
-    this.context.font = 'bold 16px Arial';
+    // Draw a question mark for the placeholder
+    this.context.fillStyle = this.config.borderColor;
+    this.context.font = this.config.placeholderFont;
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
-    this.context.fillText('🏢', x, y + 2);
+    this.context.fillText('?', x, y + 2);
     this.context.restore();
 };
 
@@ -329,9 +362,9 @@ Mario.SpinWheel.prototype.drawLogoPlaceholder = function (x, y, size) {
  */
 Mario.SpinWheel.prototype.drawCurvedBrandNameText = function (text, angle, radius) {
     this.context.save();
-    this.context.font = 'bold 16px "Press Start 2P", monospace';
-    this.context.fillStyle = this.textColor;
-    this.context.strokeStyle = this.borderColor;
+    this.context.font = this.config.font;
+    this.context.fillStyle = this.config.textColor;
+    this.context.strokeStyle = this.config.borderColor;
     this.context.lineWidth = 4;
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
@@ -363,38 +396,22 @@ Mario.SpinWheel.prototype.drawCurvedBrandNameText = function (text, angle, radiu
 };
 
 
-// Draw brandName text at (x, y) relative to current context, no truncation, styled for Mario aesthetic
-Mario.SpinWheel.prototype.drawBrandNameText = function (brandName, x, y) {
-    this.context.save();
-    // Mario-style font and color (customize as needed for your game aesthetic)
-    this.context.font = 'bold 20px Arial';
-    this.context.fillStyle = '#fff';
-    this.context.strokeStyle = '#222';
-    this.context.lineWidth = 4;
-    this.context.textAlign = 'center';
-    this.context.textBaseline = 'middle';
-    // Outline for readability
-    this.context.strokeText(brandName, x, y);
-    this.context.fillText(brandName, x, y);
-    this.context.restore();
-};
-
-/**
- * 🎁 Special indicator for guaranteed gift card
- */
+// 🎁 Special indicator for guaranteed gift card
 Mario.SpinWheel.prototype.drawGiftCardIndicator = function (angle, radius) {
     const indicatorX = this.centerX + Math.cos(angle) * (radius + 25);
     const indicatorY = this.centerY + Math.sin(angle) * (radius + 25);
 
     this.context.save();
     this.context.translate(indicatorX, indicatorY);
+    this.context.rotate(angle + Math.PI / 2); // Rotate star to align with sector
 
     // Draw golden star indicator - now more vibrant
-    this.context.fillStyle = '#F8D84A';
-    this.context.strokeStyle = '#F9A035';
-    this.context.lineWidth = 2;
+    const starConfig = this.config.starIndicator;
+    this.context.fillStyle = starConfig.fill;
+    this.context.strokeStyle = starConfig.stroke;
+    this.context.lineWidth = starConfig.lineWidth;
 
-    this.drawStar(0, 0, 10, 4, 5); // 5-point star
+    this.drawStar(0, 0, starConfig.outerRadius, starConfig.innerRadius, starConfig.points);
     this.context.fill();
     this.context.stroke();
 
@@ -428,25 +445,26 @@ Mario.SpinWheel.prototype.drawStar = function (x, y, outerRadius, innerRadius, p
  * ⚪ Draw center hub with beautiful styling
  */
 Mario.SpinWheel.prototype.drawCenterHub = function () {
+    const hubConfig = this.config.centerHub;
     // Outer ring (like a Mario block)
-    this.context.fillStyle = '#F9A035'; // Orange-brown
-    this.context.strokeStyle = this.borderColor;
-    this.context.lineWidth = 4;
+    this.context.fillStyle = hubConfig.outerRingFill;
+    this.context.strokeStyle = this.config.borderColor;
+    this.context.lineWidth = hubConfig.lineWidth;
     this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, 35, 0, 2 * Math.PI);
+    this.context.arc(this.centerX, this.centerY, hubConfig.outerRadius, 0, 2 * Math.PI);
     this.context.fill();
     this.context.stroke();
 
     // Inner ring
-    this.context.fillStyle = '#D92518'; // Red center
+    this.context.fillStyle = hubConfig.innerRingFill;
     this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, 25, 0, 2 * Math.PI);
+    this.context.arc(this.centerX, this.centerY, hubConfig.innerRadius, 0, 2 * Math.PI);
     this.context.fill();
 
     // Center dot (like a bolt)
-    this.context.fillStyle = this.borderColor;
+    this.context.fillStyle = this.config.borderColor;
     this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, 8, 0, 2 * Math.PI);
+    this.context.arc(this.centerX, this.centerY, hubConfig.dotRadius, 0, 2 * Math.PI);
     this.context.fill();
 };
 
@@ -455,22 +473,21 @@ Mario.SpinWheel.prototype.drawCenterHub = function () {
  */
 Mario.SpinWheel.prototype.drawArrow = function () {
     this.context.save();
+    const arrowConfig = this.config.arrow;
 
     // Position arrow at top center, pointing down to wheel
     const arrowX = this.centerX;
-    const arrowY = this.centerY - this.radius - 15; // A bit closer
-    const arrowHeight = 25;
-    const arrowWidth = 20;
+    const arrowY = this.centerY - this.radius - arrowConfig.offsetY;
 
-    this.context.fillStyle = this.arrowColor;
-    this.context.strokeStyle = this.borderColor;
-    this.context.lineWidth = 4;
+    this.context.fillStyle = this.config.arrowColor;
+    this.context.strokeStyle = this.config.borderColor;
+    this.context.lineWidth = arrowConfig.lineWidth;
 
     // Draw chunky, simple arrow shape
     this.context.beginPath();
-    this.context.moveTo(arrowX, arrowY + arrowHeight); // Tip
-    this.context.lineTo(arrowX - arrowWidth, arrowY); // Left corner
-    this.context.lineTo(arrowX + arrowWidth, arrowY); // Right corner
+    this.context.moveTo(arrowX, arrowY + arrowConfig.height); // Tip
+    this.context.lineTo(arrowX - arrowConfig.width, arrowY); // Left corner
+    this.context.lineTo(arrowX + arrowConfig.width, arrowY); // Right corner
     this.context.closePath();
 
     this.context.fill();
@@ -483,11 +500,12 @@ Mario.SpinWheel.prototype.drawArrow = function () {
  * 🌟 Draw outer decorative rim
  */
 Mario.SpinWheel.prototype.drawOuterRim = function () {
+    const rimConfig = this.config.rim;
     // Outer decorative ring
-    this.context.strokeStyle = this.borderColor;
-    this.context.lineWidth = 10; // Thicker for a chunkier feel
+    this.context.strokeStyle = this.config.borderColor;
+    this.context.lineWidth = rimConfig.lineWidth;
     this.context.beginPath();
-    this.context.arc(this.centerX, this.centerY, this.radius + 5, 0, 2 * Math.PI);
+    this.context.arc(this.centerX, this.centerY, this.radius + rimConfig.offset, 0, 2 * Math.PI);
     this.context.stroke();
 };
 
