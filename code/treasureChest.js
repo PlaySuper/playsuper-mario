@@ -26,7 +26,29 @@ Mario.TreasureChest = function () {
     this.sparkles = [];
     this.bounceOffset = 0;
 
-    console.log('💎 Enhanced Treasure Chest System initialized!');
+    // Mario Typography System - Consistent with spin wheel aesthetic
+    this.marioTypography = {
+        // Font configurations
+        heroFont: 'bold 18px "Press Start 2P", monospace',
+        titleFont: 'bold 14px "Press Start 2P", monospace',
+        bodyFont: 'bold 12px "Press Start 2P", monospace',
+        captionFont: 'bold 10px "Press Start 2P", monospace',
+        buttonFont: 'bold 11px "Press Start 2P", monospace',
+
+        // Color palette
+        primaryText: '#FFFFFF',
+        accentText: '#FFD700',
+        warningText: '#FF6B00',
+        successText: '#00AA00',
+
+        // Shadow effects
+        textShadow: '2px 2px 0px #000000',
+        lightShadow: '1px 1px 0px #000000',
+        glowEffect: '0 0 10px #FFD700',
+        strongGlow: '0 0 15px #FFD700, 0 0 25px #FFD700'
+    };
+
+    console.log('💎 Enhanced Treasure Chest System initialized with Mario typography!');
 };
 
 // ============= INITIALIZATION =============
@@ -182,23 +204,25 @@ Mario.TreasureChest.prototype.showTreasureChestUI = function (levelNumber, callb
     const title = document.createElement('h2');
     title.innerHTML = `🏆 LEVEL ${levelNumber} COMPLETE! 🏆`;
     title.style.cssText = `
-        font-family: 'Press Start 2P', 'Courier New', monospace;
-        color: #FF6B00;
-        font-size: 14px;
+        font: ${this.marioTypography.heroFont};
+        color: ${this.marioTypography.warningText};
         margin-bottom: 20px;
-        text-shadow: 3px 3px 0px #000000, 0 0 15px #FFD700;
+        text-shadow: ${this.marioTypography.textShadow}, ${this.marioTypography.glowEffect};
         animation: treasureTitleGlow 2s ease-in-out infinite alternate;
+        letter-spacing: 1px;
+        line-height: 1.4;
     `;
 
     // Add Mario-style message
     const message = document.createElement('div');
     message.innerHTML = `🍄 Princess Peach rewards you! 🍄`;
     message.style.cssText = `
-        font-family: 'Press Start 2P', 'Courier New', monospace;
+        font: ${this.marioTypography.bodyFont};
         color: #8B0000;
-        font-size: 10px;
         margin-bottom: 25px;
         line-height: 1.4;
+        text-shadow: ${this.marioTypography.lightShadow};
+        letter-spacing: 0.5px;
     `;
 
     // Add Mario-themed chest visual
@@ -254,12 +278,12 @@ Mario.TreasureChest.prototype.showTreasureChestUI = function (levelNumber, callb
     const instructions = document.createElement('p');
     instructions.innerHTML = '🖱️ Click the chest to open it!';
     instructions.style.cssText = `
-        font-family: 'Press Start 2P', 'Courier New', monospace;
-        color: #FFFFFF;
-        font-size: 10px;
+        font: ${this.marioTypography.captionFont};
+        color: ${this.marioTypography.primaryText};
         margin-top: 20px;
-        text-shadow: 1px 1px 0px #000;
+        text-shadow: ${this.marioTypography.textShadow};
         animation: treasureInstructionsPulse 1.5s ease-in-out infinite;
+        letter-spacing: 0.5px;
     `;
 
     // Assemble the chest UI
@@ -281,7 +305,7 @@ Mario.TreasureChest.prototype.showTreasureChestUI = function (levelNumber, callb
     // Add to document
     document.body.appendChild(overlay);
 
-    console.log('💎 Treasure chest UI displayed');
+    console.log('💎 Treasure chest UI displayed with Mario typography system');
 };
 
 /**
@@ -378,11 +402,12 @@ Mario.TreasureChest.prototype.distributeRewards = function (callback) {
     const rewardsTitle = document.createElement('h3');
     rewardsTitle.innerHTML = '🎁 YOUR REWARDS 🎁';
     rewardsTitle.style.cssText = `
-        font-family: 'Press Start 2P', 'Courier New', monospace;
-        color: #FFD700;
-        font-size: 12px;
+        font: ${this.marioTypography.titleFont};
+        color: ${this.marioTypography.accentText};
         margin-bottom: 15px;
-        text-shadow: 1px 1px 0px #000;
+        text-shadow: ${this.marioTypography.textShadow};
+        letter-spacing: 1px;
+        line-height: 1.4;
     `;
 
     rewardsContainer.appendChild(rewardsTitle);
@@ -411,15 +436,16 @@ Mario.TreasureChest.prototype.distributeRewards = function (callback) {
     continueButton.innerHTML = '🎮 CONTINUE ADVENTURE';
     continueButton.style.cssText = `
         background: linear-gradient(180deg, #32CD32 0%, #228B22 100%);
-        color: white;
+        color: ${this.marioTypography.primaryText};
         border: 3px solid #006400;
         padding: 15px 30px;
         border-radius: 10px;
-        font-family: 'Press Start 2P', 'Courier New', monospace;
-        font-size: 10px;
+        font: ${this.marioTypography.buttonFont};
         cursor: pointer;
         margin-top: 20px;
         transition: transform 0.1s ease;
+        text-shadow: ${this.marioTypography.lightShadow};
+        letter-spacing: 0.5px;
     `;
 
     continueButton.onmouseover = () => continueButton.style.transform = 'scale(1.05)';
@@ -434,6 +460,8 @@ Mario.TreasureChest.prototype.distributeRewards = function (callback) {
     // Add to overlay
     const chestContainer = overlay.querySelector('div');
     chestContainer.appendChild(rewardsContainer);
+
+    console.log('💎 Applied Mario typography to', this.rewards.length, 'reward elements');
 
     // Play reward sound
     setTimeout(() => {
@@ -483,7 +511,7 @@ Mario.TreasureChest.prototype.createRewardElement = function (reward, index) {
 
     element.innerHTML = `
         <span style="font-size: 20px;">${icon}</span>
-        <span style="font-family: 'Press Start 2P'; color: white; font-size: 10px; text-shadow: 1px 1px 0px #000;">
+        <span style="font: ${this.marioTypography.captionFont}; color: ${this.marioTypography.primaryText}; text-shadow: ${this.marioTypography.lightShadow}; letter-spacing: 0.5px;">
             ${description}
         </span>
         <span style="font-size: 16px;">✨</span>
@@ -556,8 +584,8 @@ Mario.TreasureChest.prototype.addTreasureChestStyles = function () {
         }
         
         @keyframes treasureTitleGlow {
-            from { text-shadow: 2px 2px 0px #000, 0 0 10px #FFD700; }
-            to { text-shadow: 2px 2px 0px #000, 0 0 20px #FFD700, 0 0 30px #FFD700; }
+            from { text-shadow: 2px 2px 0px #000000, 0 0 10px #FFD700; }
+            to { text-shadow: 2px 2px 0px #000000, 0 0 15px #FFD700, 0 0 25px #FFD700; }
         }
         
         @keyframes treasureInstructionsPulse {
@@ -594,10 +622,46 @@ Mario.TreasureChest.prototype.addTreasureChestStyles = function () {
     document.head.appendChild(style);
 };
 
+// ============= MARIO TYPOGRAPHY HELPER =============
+
+/**
+ * 🎨 Global Mario Typography Helper
+ * Makes the Mario aesthetic available to other components
+ */
+Mario.MarioTypography = {
+    // Font configurations
+    heroFont: 'bold 18px "Press Start 2P", monospace',
+    titleFont: 'bold 14px "Press Start 2P", monospace',
+    bodyFont: 'bold 12px "Press Start 2P", monospace',
+    captionFont: 'bold 10px "Press Start 2P", monospace',
+    buttonFont: 'bold 11px "Press Start 2P", monospace',
+
+    // Color palette
+    primaryText: '#FFFFFF',
+    accentText: '#FFD700',
+    warningText: '#FF6B00',
+    successText: '#00AA00',
+
+    // Shadow effects
+    textShadow: '2px 2px 0px #000000',
+    lightShadow: '1px 1px 0px #000000',
+    glowEffect: '0 0 10px #FFD700',
+    strongGlow: '0 0 15px #FFD700, 0 0 25px #FFD700',
+
+    // Helper method to get complete style string
+    getStyle: function (type, color, shadow) {
+        const font = this[type + 'Font'] || this.bodyFont;
+        const textColor = this[color] || this.primaryText;
+        const textShadow = this[shadow] || this.lightShadow;
+
+        return `font: ${font}; color: ${textColor}; text-shadow: ${textShadow}; letter-spacing: 0.5px; line-height: 1.4;`;
+    }
+};
+
 // ============= GLOBAL INSTANCE =============
 
 // Create global instance for easy access
 if (typeof Mario !== 'undefined') {
     Mario.treasureChest = new Mario.TreasureChest();
-    console.log('💎✨ Enhanced Treasure Chest System ready to reward players!');
+    console.log('💎✨ Enhanced Treasure Chest System ready with Mario Typography Helper!');
 }
