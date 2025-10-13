@@ -485,6 +485,11 @@
         <!-- PlaySuper Integration -->
         <script src="code/playSuperEnvironment.js"></script>
         <script src="code/playSuperConfig.js"></script>
+        <script src="code/playSuperAPIHelper.js"></script>
+        <script src="code/dailyRewards.js"></script>
+        <script src="code/spinWheel.js"></script>
+        <script src="code/treasureChest.js"></script>
+        <script src="code/discountSystem.js"></script>
         <script src="code/playSuperIntegration.js"></script>
 
         <script src="code/music.js"></script>
@@ -527,12 +532,10 @@
                 // Show game screen
                 document.getElementById('game-screen').style.display = 'block';
                 
-                // Hide rewards button if no integration
-                if (!withRewards) {
-                    const rewardsBtn = document.getElementById('playsuper-ui');
-                    if (rewardsBtn) {
-                        rewardsBtn.style.display = 'none';
-                    }
+                // 🏪 Staff Engineer Approach: Hide store button during gameplay for focused experience
+                const storeBtn = document.getElementById('playsuper-ui');
+                if (storeBtn) {
+                    storeBtn.style.display = 'none'; // Hidden during gameplay
                 }
                 
                 // Initialize the game

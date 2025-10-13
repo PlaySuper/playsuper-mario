@@ -75,7 +75,7 @@ Mario.PlaySuperIntegration.prototype.init = function () {
             console.log('PlaySuper integration initialized successfully!');
             console.log('Player UUID:', this.playerUUID);
             console.log('Coins per level:', this.rewardsPerLevel);
-            console.log('🎮 Press "T" key to show treasure chest with real rewards!');
+            console.log('Press "T" key to show treasure chest with real rewards!');
 
             // Award welcome coins for new users
             if (createResult && createResult.isNewUser) {
@@ -98,7 +98,7 @@ Mario.PlaySuperIntegration.prototype.getPlayerUUID = function () {
 
         // Mark as new user for welcome coin distribution
         localStorage.setItem('playsuper_new_user', 'true');
-        console.log('🎉 New user detected! Will award welcome coins after registration.');
+        console.log('New user detected! Will award welcome coins after registration.');
     }
 
     return uuid;
@@ -134,7 +134,7 @@ Mario.PlaySuperIntegration.prototype.createPlayer = function () {
             }
 
             // Player was successfully created (status 200/201)
-            console.log('✅ New player created successfully!');
+            console.log('New player created successfully!');
             return response.json().catch(() => ({
                 message: 'Player created',
                 isNewUser: isNewUser
@@ -666,7 +666,99 @@ Mario.PlaySuperIntegration.prototype.showErrorNotification = function (message) 
     }, 4500);
 };
 
+// ============= STORE ACCESS CONTROL (Staff Engineer Approach) =============
+
+/**
+ * 🏠 Detect if player is currently on the home screen (TitleState)
+ * This enables focused gameplay without store distractions
+ */
+Mario.PlaySuperIntegration.prototype.isOnHomeScreen = function () {
+    // Check if we're in the title state by examining the global game state
+    if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
+        const currentState = Enjine.Application.Instance.State;
+        return currentState instanceof Mario.TitleState;
+    }
+
+    // Fallback: check if title music is playing (indicates title screen)
+    return document.querySelector('.game-container canvas') &&
+        !Mario.MarioCharacter.Jumping &&
+        !Mario.MarioCharacter.Walking;
+};
+
+/**
+ * 🚫 Show elegant message when store is unavailable during gameplay
+ * Maintains user experience while enforcing business rules
+ */
+Mario.PlaySuperIntegration.prototype.showStoreUnavailableMessage = function () {
+    // Create a beautiful, Mario-themed notification
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E8E 50%, #FF6B6B 100%);
+            color: #FFFFFF;
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 3px solid #8B0000;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            font-size: 10px;
+            text-align: center;
+            z-index: 25000;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 0 #FF9999;
+            animation: marioShake 0.5s ease-in-out;
+        ">
+            <div style="margin-bottom: 10px;">🏪 STORE CLOSED</div>
+            <div style="font-size: 8px; line-height: 1.4;">
+                Visit the store from the<br/>
+                main menu for rewards!
+            </div>
+        </div>
+    `;
+
+    // Add shake animation
+    if (!document.head.querySelector('#mario-store-unavailable-style')) {
+        const style = document.createElement('style');
+        style.id = 'mario-store-unavailable-style';
+        style.textContent = `
+            @keyframes marioShake {
+                0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+                25% { transform: translate(-50%, -50%) rotate(-2deg); }
+                75% { transform: translate(-50%, -50%) rotate(2deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(notification);
+
+    // Play Mario-style "bump" sound for feedback
+    if (typeof Enjine !== 'undefined' && Enjine.Resources) {
+        Enjine.Resources.PlaySound("bump");
+    }
+
+    // Auto-remove after 3 seconds with fade-out
+    setTimeout(() => {
+        notification.style.transition = 'opacity 0.5s ease-out';
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    }, 2500);
+};
+
 Mario.PlaySuperIntegration.prototype.openStore = function () {
+    // 🏪 Staff Engineer Approach: Store access control for focused gameplay
+    if (!this.isOnHomeScreen()) {
+        console.log('🏪 Store only available on home screen for focused gameplay experience');
+        this.showStoreUnavailableMessage();
+        return;
+    }
+
     if (!this.isInitialized) {
         console.warn('PlaySuper not initialized yet');
         return;
