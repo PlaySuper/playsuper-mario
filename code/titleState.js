@@ -337,6 +337,7 @@ Mario.TitleState.prototype.startGame = function () {
             console.error('🚨 No application instance found!');
         }
     }, 1000);
+
 };
 
 Mario.TitleState.prototype.openRewardsStore = function () {
