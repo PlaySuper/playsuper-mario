@@ -340,6 +340,18 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
         Mario.GlobalMapState = new Mario.MapState();
         context.ChangeState(Mario.GlobalMapState);
     }
+
+    if (typeof Mario.playSuperIntegration !== 'undefined') {
+        Mario.playSuperIntegration.openStore();
+    } else {
+        console.warn('PlaySuper integration not available');
+        alert('Rewards store not available. Please check your PlaySuper integration.');
+    }
+};
+
+Mario.TitleState.prototype.CheckForChange = function (context) {
+    // Button navigation has replaced keyboard navigation
+    // This method is now primarily for state management
 };/**
  * 🧹 Clean up any existing modals or overlays
  */
