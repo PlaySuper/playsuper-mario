@@ -107,6 +107,117 @@
                 }
             }
             
+            /* Mobile Controls */
+            .mobile-controls {
+                display: none; /* Hidden by default */
+                position: fixed;
+                bottom: 20px;
+                width: 100%;
+                max-width: 640px; /* Match canvas width */
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1001;
+                padding: 0 20px;
+                box-sizing: border-box;
+            }
+
+            .mobile-controls .d-pad {
+                position: absolute;
+                left: 20px;
+                bottom: 0;
+                width: 120px;
+                height: 120px;
+            }
+
+            .mobile-controls .actions {
+                position: absolute;
+                right: 20px;
+                bottom: 10px;
+                display: flex;
+                align-items: flex-end;
+            }
+
+            .mobile-controls button {
+                background: rgba(0, 0, 0, 0.4);
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                color: white;
+                border-radius: 50%;
+                font-family: 'Press Start 2P', 'Courier New', monospace;
+                font-size: 16px;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+
+            .mobile-controls .d-pad button {
+                position: absolute;
+                width: 50px;
+                height: 50px;
+                border-radius: 10px;
+            }
+
+            .mobile-controls .d-pad .up { top: 0; left: 35px; }
+            .mobile-controls .d-pad .down { bottom: 0; left: 35px; }
+            .mobile-controls .d-pad .left { top: 35px; left: 0; }
+            .mobile-controls .d-pad .right { top: 35px; right: 0; }
+            
+            .mobile-controls .actions button {
+                width: 60px;
+                height: 60px;
+                margin-left: 20px;
+            }
+
+            .mobile-controls .actions .b-button {
+                width: 70px;
+                height: 70px;
+            }
+
+            /* Show on touch devices */
+            .touch-enabled .mobile-controls {
+                display: block;
+            }
+
+            @media (max-width: 768px) and (orientation: landscape) {
+                .mobile-controls {
+                    bottom: 10px;
+                }
+                .mobile-controls .d-pad {
+                    width: 100px;
+                    height: 100px;
+                }
+                .mobile-controls .d-pad button {
+                    width: 40px;
+                    height: 40px;
+                }
+                .mobile-controls .d-pad .up { top: 0; left: 30px; }
+                .mobile-controls .d-pad .down { bottom: 0; left: 30px; }
+                .mobile-controls .d-pad .left { top: 30px; left: 0; }
+                .mobile-controls .d-pad .right { top: 30px; right: 0; }
+                .mobile-controls .actions button {
+                    width: 50px;
+                    height: 50px;
+                }
+                .mobile-controls .actions .b-button {
+                    width: 60px;
+                    height: 60px;
+                }
+            }
+
+            @media (max-width: 480px) {
+                .mobile-controls {
+                    padding: 0 10px;
+                }
+                .mobile-controls .d-pad {
+                    left: 10px;
+                }
+                .mobile-controls .actions {
+                    right: 10px;
+                }
+            }
+            
             /* Setup Screen Styles */
             .setup-screen {
                 position: fixed;
@@ -436,6 +547,19 @@
             </div>
         </div>
 
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+            <div class="d-pad">
+                <button class="left">◀</button>
+                <button class="right">▶</button>
+                <button class="down">▼</button>
+            </div>
+            <div class="actions">
+                <button class="b-button">A</button> <!-- Run/Shoot -->
+                <button class="a-button">S</button> <!-- Jump -->
+            </div>
+        </div>
+
         <!-- Enjine Includes -->
         <script src="Enjine/core.js"></script>
         <script src="Enjine/gameCanvas.js"></script>
@@ -549,9 +673,43 @@
             }
         </script>
 
+        <script>
+            // Mobile Controls Logic
+            function setupMobileControls() {
+                const buttons = [
+                    { selector: '.mobile-controls .left', key: Enjine.Keys.Left },
+                    { selector: '.mobile-controls .right', key: Enjine.Keys.Right },
+                    { selector: '.mobile-controls .down', key: Enjine.Keys.Down },
+                    { selector: '.mobile-controls .a-button', key: Enjine.Keys.S }, // Jump
+                    { selector: '.mobile-controls .b-button', key: Enjine.Keys.A }  // Run/Shoot
+                ];
+
+                buttons.forEach(buttonInfo => {
+                    const buttonEl = document.querySelector(buttonInfo.selector);
+                    if (buttonEl) {
+                        buttonEl.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            Enjine.KeyboardInput.Pressed[buttonInfo.key] = true;
+                        });
+                        buttonEl.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            Enjine.KeyboardInput.Pressed[buttonInfo.key] = false;
+                        });
+                    }
+                });
+            }
+        </script>
+
         <script>$(document).ready(function() { 
             // Game initialization is now handled by setup screen
             // The setup screen will call startGame() when ready
+
+            // Mobile device detection
+            const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+            if (isTouchDevice) {
+                document.body.classList.add('touch-enabled');
+                setupMobileControls();
+            }
         });</script>
 	</body>
 </html>
