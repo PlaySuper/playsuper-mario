@@ -77,6 +77,10 @@ Mario.PlaySuperIntegration.prototype.init = function () {
             console.log('Coins per level:', this.rewardsPerLevel);
             console.log('Press "T" key to show treasure chest with real rewards!');
 
+            // Preload the store iframe for instant access
+            console.log('Starting store preload for optimal user experience...');
+            this.preloadStore();
+
             // Award welcome coins for new users
             if (createResult && createResult.isNewUser) {
                 this.awardWelcomeCoins();
@@ -751,6 +755,120 @@ Mario.PlaySuperIntegration.prototype.showStoreUnavailableMessage = function () {
     }, 2500);
 };
 
+// ============= STORE PRELOAD HELPERS =============
+
+Mario.PlaySuperIntegration.prototype.createStoreContainer = function () {
+    let storeContainer = document.getElementById('playsuper-store-container');
+    if (!storeContainer) {
+        storeContainer = document.createElement('div');
+        storeContainer.id = 'playsuper-store-container';
+        storeContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 20000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            box-sizing: border-box;
+        `;
+        document.body.appendChild(storeContainer);
+        console.log('Store container created and added to DOM');
+    }
+    return storeContainer;
+};
+
+Mario.PlaySuperIntegration.prototype.createStoreIframe = function () {
+    this.storeIframe = document.createElement('iframe');
+    this.storeIframe.style.cssText = `
+        width: 375px;
+        height: 667px;
+        max-width: 100vw;
+        max-height: 100vh;
+        border: none;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+
+    // Configure iframe security settings
+    this.storeIframe.setAttribute('sandbox',
+        'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation'
+    );
+    this.storeIframe.setAttribute('allow', 'cross-origin-isolated');
+
+    console.log('Store iframe element created with security settings');
+    return this.storeIframe;
+};
+
+Mario.PlaySuperIntegration.prototype.createCloseButton = function () {
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = 'X Close Store';
+    closeButton.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #ff4444;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        z-index: 20001;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    `;
+    closeButton.onclick = () => this.closeStore();
+    return closeButton;
+};
+
+Mario.PlaySuperIntegration.prototype.preloadStore = function () {
+    console.log('Preloading store iframe for instant access...');
+
+    if (!this.apiKey || !this.storeUrl) {
+        console.warn('Cannot preload store - missing API key or store URL');
+        return;
+    }
+
+    // Create the container (hidden by default)
+    const storeContainer = this.createStoreContainer();
+
+    // Create and configure the iframe
+    this.createStoreIframe();
+
+    // Create close button
+    const closeButton = this.createCloseButton();
+
+    // Add elements to container
+    storeContainer.appendChild(closeButton);
+    storeContainer.appendChild(this.storeIframe);
+
+    // Configure store URL for preloading
+    const storeUrl = new URL(this.storeUrl);
+    storeUrl.searchParams.set('apiKey', this.apiKey);
+    storeUrl.searchParams.set('view', 'mobile');
+    storeUrl.searchParams.set('embedded', 'true');
+
+    // Set up iframe load handler for preloading
+    this.storeIframe.onload = () => {
+        console.log('Store iframe preloaded successfully, sending auth token...');
+        setTimeout(() => {
+            this.sendAuthToken();
+            console.log('Store preload complete - ready for instant access');
+        }, 500);
+    };
+
+    // Start loading the store in background
+    this.storeIframe.src = storeUrl.toString();
+
+    console.log('Store preloading initiated in background');
+};
+
 Mario.PlaySuperIntegration.prototype.openStore = function () {
     // 🏪 Staff Engineer Approach: Store access control for focused gameplay
     if (!this.isOnHomeScreen()) {
@@ -771,90 +889,17 @@ Mario.PlaySuperIntegration.prototype.openStore = function () {
 
     console.log('Opening PlaySuper store...');
 
-    // Create mobile-optimized store container
-    let storeContainer = document.getElementById('playsuper-store-container');
-    if (!storeContainer) {
-        storeContainer = document.createElement('div');
-        storeContainer.id = 'playsuper-store-container';
-        storeContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 20000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-            box-sizing: border-box;
-        `;
-        document.body.appendChild(storeContainer);
+    // Check if store is preloaded
+    const storeContainer = document.getElementById('playsuper-store-container');
+    if (!storeContainer || !this.storeIframe) {
+        console.warn('Store not preloaded, creating on demand...');
+        this.preloadStore();
+        return;
     }
 
-    // Create close button
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = 'X Close Store';
-    closeButton.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #ff4444;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        z-index: 20001;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-    `;
-    closeButton.onclick = () => this.closeStore();
-
-    // Create mobile-restricted iframe (375px x 667px - iPhone dimensions)
-    this.storeIframe = document.createElement('iframe');
-    this.storeIframe.style.cssText = `
-        width: 375px;
-        height: 667px;
-        max-width: 100vw;
-        max-height: 100vh;
-        border: none;
-        border-radius: 10px;
-        background: white;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    `;
-
-    // Add API key as URL parameter and force mobile view
-    const storeUrl = new URL(this.storeUrl);
-    storeUrl.searchParams.set('apiKey', this.apiKey);
-    storeUrl.searchParams.set('view', 'mobile');
-    storeUrl.searchParams.set('embedded', 'true');
-
-    this.storeIframe.src = storeUrl.toString();
-
-    // Configure iframe security settings
-    this.storeIframe.setAttribute('sandbox',
-        'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation'
-    );
-    this.storeIframe.setAttribute('allow', 'cross-origin-isolated');
-
-    // Send auth token immediately when iframe loads
-    this.storeIframe.onload = () => {
-        console.log('Store iframe loaded, sending auth token immediately...');
-        // Small delay to ensure iframe is ready
-        setTimeout(() => {
-            this.sendAuthToken();
-        }, 500);
-    };
-
-    storeContainer.innerHTML = '';
-    storeContainer.appendChild(closeButton);
-    storeContainer.appendChild(this.storeIframe);
+    // Show the preloaded store instantly
     storeContainer.style.display = 'flex';
-
-    console.log('Mobile store iframe created (375x667px) and configured');
+    console.log('Preloaded store opened instantly - no loading delay!');
 };
 
 Mario.PlaySuperIntegration.prototype.sendAuthToken = function () {
@@ -909,91 +954,48 @@ Mario.PlaySuperIntegration.prototype.openStoreToMyRewards = function () {
 
     console.log('Opening PlaySuper store to My Rewards page...');
 
-    // Create mobile-optimized store container
-    let storeContainer = document.getElementById('playsuper-store-container');
-    if (!storeContainer) {
-        storeContainer = document.createElement('div');
-        storeContainer.id = 'playsuper-store-container';
-        storeContainer.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 20000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 0;
-            box-sizing: border-box;
-        `;
-        document.body.appendChild(storeContainer);
+    // Check if store is preloaded
+    const storeContainer = document.getElementById('playsuper-store-container');
+    if (!storeContainer || !this.storeIframe) {
+        console.warn('Store not preloaded, creating on demand for My Rewards...');
+        this.preloadStore();
+        // Wait for preload to complete, then navigate to rewards
+        setTimeout(() => {
+            this.navigateToMyRewards();
+        }, 1000);
+        return;
     }
 
-    // Create close button
-    const closeButton = document.createElement('button');
-    closeButton.innerHTML = 'X Close Store';
-    closeButton.style.cssText = `
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: #ff4444;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-        z-index: 20001;
-        font-family: 'Courier New', monospace;
-        font-weight: bold;
-    `;
-    closeButton.onclick = () => this.closeStore();
+    // Navigate the preloaded iframe to My Rewards page
+    this.navigateToMyRewards();
 
-    // Create mobile-restricted iframe (375px x 667px - iPhone dimensions)
-    this.storeIframe = document.createElement('iframe');
-    this.storeIframe.style.cssText = `
-        width: 375px;
-        height: 667px;
-        max-width: 100vw;
-        max-height: 100vh;
-        border: none;
-        border-radius: 10px;
-        background: white;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    `;
-
-    // Add API key as URL parameter and navigate to my-rewards page
-    const storeUrl = new URL(this.storeUrl);
-    storeUrl.pathname = '/rewards/my-rewards'; // Navigate directly to my-rewards page
-    storeUrl.searchParams.set('apiKey', this.apiKey);
-    storeUrl.searchParams.set('view', 'mobile');
-    storeUrl.searchParams.set('embedded', 'true');
-
-    this.storeIframe.src = storeUrl.toString();
-
-    // Configure iframe security settings
-    this.storeIframe.setAttribute('sandbox',
-        'allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-storage-access-by-user-activation'
-    );
-    this.storeIframe.setAttribute('allow', 'cross-origin-isolated');
-
-    // Send auth token immediately when iframe loads
-    this.storeIframe.onload = () => {
-        console.log('My Rewards store iframe loaded, sending auth token immediately...');
-        // Small delay to ensure iframe is ready
-        setTimeout(() => {
-            this.sendAuthToken();
-        }, 500);
-    };
-
-    storeContainer.innerHTML = '';
-    storeContainer.appendChild(closeButton);
-    storeContainer.appendChild(this.storeIframe);
+    // Show the store
     storeContainer.style.display = 'flex';
+    console.log('Navigated preloaded store to My Rewards page instantly!');
+};
 
-    console.log('My Rewards store iframe created and configured');
+Mario.PlaySuperIntegration.prototype.navigateToMyRewards = function () {
+    if (!this.storeIframe) {
+        console.error('Cannot navigate to My Rewards - iframe not available');
+        return;
+    }
+
+    // Create URL for My Rewards page
+    const rewardsUrl = new URL(this.storeUrl);
+    rewardsUrl.pathname = '/rewards/my-rewards'; // Navigate directly to my-rewards page
+    rewardsUrl.searchParams.set('apiKey', this.apiKey);
+    rewardsUrl.searchParams.set('view', 'mobile');
+    rewardsUrl.searchParams.set('embedded', 'true');
+
+    // Navigate to My Rewards page
+    this.storeIframe.src = rewardsUrl.toString();
+    console.log('Navigating store iframe to My Rewards page...');
+
+    // Re-send auth token after navigation
+    setTimeout(() => {
+        this.sendAuthToken();
+        console.log('Auth token sent to My Rewards page');
+    }, 800);
 };
 
 Mario.PlaySuperIntegration.prototype.closeStore = function () {
