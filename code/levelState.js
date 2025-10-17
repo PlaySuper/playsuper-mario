@@ -95,14 +95,22 @@ Mario.LevelState.prototype.Enter = function () {
         Mario.MarioCharacter.DeathDiscountTriggered = false;
     }
 
-    console.log('Level state entered - key input ready');
+    // Create home button
+    this.createHomeButton();
+
+    console.log('Level state entered - button input ready');
 };
 
 Mario.LevelState.prototype.Exit = function () {
+    console.log('🚪 Exiting level state...');
+
     // Trigger PlaySuper level exit tracking
     if (typeof Mario.playSuperIntegration !== 'undefined') {
         Mario.playSuperIntegration.onLevelExit();
     }
+
+    // Clean up home button
+    this.removeHomeButton();
 
     delete this.Level;
     delete this.Layer;
@@ -113,6 +121,8 @@ Mario.LevelState.prototype.Exit = function () {
     delete this.FireballsToCheck;
     delete this.FontShadow;
     delete this.Font;
+
+    console.log('Level state cleanup complete');
 };
 
 Mario.LevelState.prototype.CheckShellCollide = function (shell) {
@@ -129,21 +139,7 @@ Mario.LevelState.prototype.Update = function (delta) {
 
     this.Delta = delta;
 
-    // 🏠 Check for Home key (H) to return to title screen
-    // Add debouncing to prevent rapid state changes
-    const currentTime = Date.now();
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) &&
-        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🏠 Returning to home screen...');
-        this.lastKeyPressTime = currentTime;
-        // Stop any PlaySuper integration activities
-        if (typeof Mario.playSuperIntegration !== 'undefined') {
-            Mario.playSuperIntegration.onLevelExit();
-        }
-        // Change to title state
-        this.GotoTitleState = true;
-        return;
-    }
+    // Home button functionality replaced keyboard controls
 
     this.TimeLeft -= delta;
     if ((this.TimeLeft | 0) === 0) {
@@ -542,4 +538,97 @@ Mario.LevelState.prototype.CheckForChange = function (context) {
             context.ChangeState(Mario.GlobalMapState);
         }
     }
+};
+
+// ============= HOME BUTTON SYSTEM =============
+
+Mario.LevelState.prototype.createHomeButton = function () {
+    console.log('Creating level home button...');
+
+    // Clean up any existing button
+    this.removeHomeButton();
+
+    // Get canvas position for button positioning
+    const canvas = document.getElementById('canvas');
+    if (!canvas) {
+        console.error('Canvas not found for home button positioning');
+        return;
+    }
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    // Create home button
+    const homeButton = document.createElement('button');
+    homeButton.id = 'mario-level-home-btn';
+    homeButton.innerHTML = '🏠 HOME';
+    homeButton.style.cssText = `
+        position: fixed;
+        top: ${canvasRect.top + 10}px;
+        left: ${canvasRect.left + 10}px;
+        background: linear-gradient(180deg, #FF6B6B 0%, #E53E3E 100%);
+        color: white;
+        border: 2px solid #FFFFFF;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-family: 'Press Start 2P', 'Courier New', monospace;
+        font-size: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        transition: all 0.2s ease;
+        text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    `;
+
+    homeButton.onmouseover = function () {
+        this.style.transform = 'scale(1.05) translateY(-1px)';
+        this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.4)';
+    };
+
+    homeButton.onmouseout = function () {
+        this.style.transform = 'scale(1)';
+        this.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+    };
+
+    homeButton.onmousedown = function () {
+        this.style.transform = 'scale(0.95)';
+    };
+
+    homeButton.onmouseup = function () {
+        this.style.transform = 'scale(1)';
+    };
+
+    homeButton.onclick = () => this.goHome();
+
+    // Add to document
+    document.body.appendChild(homeButton);
+
+    console.log('Level home button created');
+};
+
+Mario.LevelState.prototype.removeHomeButton = function () {
+    const existingButton = document.getElementById('mario-level-home-btn');
+    if (existingButton) {
+        existingButton.remove();
+        console.log('Removed level home button');
+    }
+};
+
+Mario.LevelState.prototype.goHome = function () {
+    console.log('🏠 Home button clicked - returning to title screen...');
+
+    // Play button sound
+    if (typeof Enjine !== 'undefined' && Enjine.Resources) {
+        Enjine.Resources.PlaySound("pipe");
+    }
+
+    // Stop any PlaySuper integration activities
+    if (typeof Mario.playSuperIntegration !== 'undefined') {
+        Mario.playSuperIntegration.onLevelExit();
+    }
+
+    // Set flag to change to title state
+    this.GotoTitleState = true;
 };
