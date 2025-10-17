@@ -17,14 +17,14 @@
             }
             
             body {
-                background: linear-gradient(180deg, #5C94FC 0%, #5C94FC 50%, #00AA00 50%, #00AA00 100%);
+                background: #000; /* Black background for fullscreen effect */
                 font-family: 'Press Start 2P', 'Courier New', monospace;
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                overflow-x: hidden;
+                overflow: hidden; /* Prevent scrollbars */
                 image-rendering: pixelated;
                 image-rendering: -moz-crisp-edges;
                 image-rendering: crisp-edges;
@@ -59,33 +59,38 @@
             .game-container {
                 position: relative;
                 display: flex;
-                flex-direction: column;
+                flex-direction: row; /* Align canvas and sidebars */
                 align-items: center;
-                background: linear-gradient(145deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
-                border: 6px solid #654321;
-                border-radius: 15px;
-                padding: 20px;
-                box-shadow: inset 0 2px 0 #D2691E, inset 0 -2px 0 #5D4037, 0 8px 16px rgba(0,0,0,0.3);
+                justify-content: center;
+                width: 100vw;
+                height: 100vh;
+                background: url('images/background.png') repeat; /* Themed background */
             }
             
             #canvas {
-                border: 6px solid #654321;
-                border-radius: 8px;
-                box-shadow: inset 0 2px 0 #8B4513, inset 0 -2px 0 #5D4037, 0 8px 25px rgba(0,0,0,0.4);
-                max-width: 100%;
-                height: auto;
-                display: block;
+                height: 100vh;
+                width: auto;
+                max-width: 100vw;
+                border: none;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
                 image-rendering: pixelated;
                 image-rendering: -moz-crisp-edges;
                 image-rendering: crisp-edges;
             }
             
+            .sidebar {
+                flex: 1;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 20px;
+            }
+
             /* Responsive canvas */
             @media (max-width: 768px) {
-                #canvas {
-                    width: 100%;
-                    max-width: 640px;
-                }
+                /* Previous styles for canvas responsiveness are no longer needed with the new approach */
                 
                 .game-header h1 {
                     font-size: 2em;
@@ -111,30 +116,30 @@
             .mobile-controls {
                 display: none; /* Hidden by default */
                 position: fixed;
-                bottom: 20px;
+                top: 0;
+                left: 0;
                 width: 100%;
-                max-width: 640px; /* Match canvas width */
-                left: 50%;
-                transform: translateX(-50%);
+                height: 100%;
                 z-index: 1001;
-                padding: 0 20px;
-                box-sizing: border-box;
+                pointer-events: none; /* Allow clicks to pass through the container */
             }
 
             .mobile-controls .d-pad {
                 position: absolute;
                 left: 20px;
-                bottom: 0;
-                width: 120px;
-                height: 120px;
+                bottom: 20px;
+                width: 150px;
+                height: 150px;
+                pointer-events: all; /* Enable clicks on the d-pad */
             }
 
             .mobile-controls .actions {
                 position: absolute;
                 right: 20px;
-                bottom: 10px;
+                bottom: 20px;
                 display: flex;
                 align-items: flex-end;
+                pointer-events: all; /* Enable clicks on action buttons */
             }
 
             .mobile-controls button {
@@ -165,14 +170,14 @@
             .mobile-controls .d-pad .right { top: 35px; right: 0; }
             
             .mobile-controls .actions button {
-                width: 60px;
-                height: 60px;
+                width: 70px;
+                height: 70px;
                 margin-left: 20px;
             }
 
             .mobile-controls .actions .b-button {
-                width: 70px;
-                height: 70px;
+                width: 90px;
+                height: 90px;
             }
 
             /* Show on touch devices */
@@ -181,41 +186,30 @@
             }
 
             @media (max-width: 768px) and (orientation: landscape) {
-                .mobile-controls {
-                    bottom: 10px;
-                }
                 .mobile-controls .d-pad {
-                    width: 100px;
-                    height: 100px;
+                    width: 120px;
+                    height: 120px;
                 }
                 .mobile-controls .d-pad button {
-                    width: 40px;
-                    height: 40px;
-                }
-                .mobile-controls .d-pad .up { top: 0; left: 30px; }
-                .mobile-controls .d-pad .down { bottom: 0; left: 30px; }
-                .mobile-controls .d-pad .left { top: 30px; left: 0; }
-                .mobile-controls .d-pad .right { top: 30px; right: 0; }
-                .mobile-controls .actions button {
                     width: 50px;
                     height: 50px;
                 }
-                .mobile-controls .actions .b-button {
+                .mobile-controls .d-pad .up { top: 0; left: 35px; }
+                .mobile-controls .d-pad .down { bottom: 0; left: 35px; }
+                .mobile-controls .d-pad .left { top: 35px; left: 0; }
+                .mobile-controls .d-pad .right { top: 35px; right: 0; }
+                .mobile-controls .actions button {
                     width: 60px;
                     height: 60px;
+                }
+                .mobile-controls .actions .b-button {
+                    width: 75px;
+                    height: 75px;
                 }
             }
 
             @media (max-width: 480px) {
-                .mobile-controls {
-                    padding: 0 10px;
-                }
-                .mobile-controls .d-pad {
-                    left: 10px;
-                }
-                .mobile-controls .actions {
-                    right: 10px;
-                }
+                /* No longer needed, as controls are positioned from screen edges */
             }
             
             /* Setup Screen Styles */
@@ -544,6 +538,20 @@
                 <canvas id="canvas" width="640" height="480">
                     <p>Your browser does not support the canvas element. Please update your browser!</p>
                 </canvas>
+                <div class="sidebar right"></div>
+            </div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="mobile-controls">
+            <div class="d-pad">
+                <button class="left">◀</button>
+                <button class="right">▶</button>
+                <button class="down">▼</button>
+            </div>
+            <div class="actions">
+                <button class="b-button">A</button> <!-- Run/Shoot -->
+                <button class="a-button">S</button> <!-- Jump -->
             </div>
         </div>
 
