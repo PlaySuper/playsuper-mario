@@ -279,6 +279,16 @@
                 box-shadow: 0 0 20px rgba(0,0,0,0.5);
             }
             
+            /* Hide old mobile controls when Game Boy mode is active */
+            .gameboy-mode .mobile-controls {
+                display: none !important;
+            }
+            
+            /* Show original game screen by default, hide in gameboy mode */
+            .gameboy-mode #game-screen {
+                display: none !important;
+            }
+            
             /* Show Game Boy layout on touch devices in landscape */
             @media (max-width: 768px) and (orientation: landscape) {
                 .touch-enabled .mobile-gameboy-layout.active {
@@ -904,22 +914,65 @@
                     // Show Game Boy layout
                     mobileLayout.classList.add('active');
                     
-                    // Transfer canvas context if game is running
-                    if (this.originalCanvas && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
-                        this.transferCanvasToMobile();
+                    // Hide original game screen
+                    if (gameScreen) {
+                        gameScreen.style.display = 'none';
                     }
+                    
+                    // Transfer canvas context if game is running
+                    setTimeout(() => {
+                        if (this.originalCanvas && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
+                            this.transferCanvasToMobile();
+                            this.startCanvasSync();
+                        }
+                    }, 100);
                     
                     this.isActive = true;
                     document.body.classList.add('gameboy-mode');
+                }
+                
+                startCanvasSync() {
+                    // Continuously sync the mobile canvas with the game rendering
+                    if (this.syncInterval) {
+                        clearInterval(this.syncInterval);
+                    }
+                    
+                    this.syncInterval = setInterval(() => {
+                        if (this.isActive && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
+                            const app = window.Enjine.Application.Instance;
+                            if (app.canvas && app.canvas.Canvas === this.mobileCanvas) {
+                                // Canvas is already correctly set, no need to sync
+                                return;
+                            }
+                            // Re-transfer if needed
+                            this.transferCanvasToMobile();
+                        }
+                    }, 100);
+                }
+                
+                stopCanvasSync() {
+                    if (this.syncInterval) {
+                        clearInterval(this.syncInterval);
+                        this.syncInterval = null;
+                    }
                 }
                 
                 deactivateGameBoyLayout() {
                     console.log('🎮 Deactivating Game Boy layout...');
                     
                     const mobileLayout = document.getElementById('mobile-gameboy');
+                    const gameScreen = document.getElementById('game-screen');
+                    
+                    // Stop canvas sync
+                    this.stopCanvasSync();
                     
                     // Hide Game Boy layout
                     mobileLayout.classList.remove('active');
+                    
+                    // Show original game screen
+                    if (gameScreen) {
+                        gameScreen.style.display = 'block';
+                    }
                     
                     // Transfer canvas back if needed
                     if (this.mobileCanvas && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
@@ -933,11 +986,25 @@
                 transferCanvasToMobile() {
                     try {
                         const app = window.Enjine.Application.Instance;
-                        if (app && app.canvas) {
+                        if (app && app.canvas && this.mobileCanvas) {
+                            // Copy current canvas content to mobile canvas
+                            const mobileCtx = this.mobileCanvas.getContext('2d');
+                            const originalCtx = this.originalCanvas.getContext('2d');
+                            
+                            // Clear mobile canvas and copy from original
+                            mobileCtx.clearRect(0, 0, this.mobileCanvas.width, this.mobileCanvas.height);
+                            mobileCtx.drawImage(this.originalCanvas, 0, 0);
+                            
                             // Update the game engine to use the mobile canvas
                             app.canvas.Canvas = this.mobileCanvas;
-                            app.canvas.BackBuffer = this.mobileCanvas.getContext('2d');
-                            app.canvas.BackBufferContext2D = this.mobileCanvas.getContext('2d');
+                            app.canvas.BackBuffer = mobileCtx;
+                            app.canvas.BackBufferContext2D = mobileCtx;
+                            
+                            // Force a redraw
+                            if (app.stateContext && app.stateContext.State) {
+                                app.stateContext.State.Draw(mobileCtx);
+                            }
+                            
                             console.log('✅ Canvas transferred to mobile layout');
                         }
                     } catch (error) {
@@ -1022,8 +1089,15 @@
             window.gameBoyLayout = new GameBoyLayout();
         </script>
 
+        <script>
+            // Placeholder for old mobile controls (for compatibility)
+            function setupMobileControls() {
+                console.log('Old mobile controls disabled - using Game Boy layout instead');
+            }
+        </script>
+
         <script>$(document).ready(function() { 
-            // Initialize Game Boy layout for mobile devices
+            // Initialize Game Boy layout for mobile devices  
             if (typeof window.gameBoyLayout !== 'undefined') {
                 window.gameBoyLayout.init();
                 document.body.classList.add('touch-enabled');
@@ -1032,13 +1106,6 @@
             
             // Game initialization is now handled by setup screen
             // The setup screen will call startGame() when ready
-
-            // Mobile device detection
-            const isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-            if (isTouchDevice) {
-                document.body.classList.add('touch-enabled');
-                setupMobileControls();
-            }
         });</script>
 	</body>
 </html>
