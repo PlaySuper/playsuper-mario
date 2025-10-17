@@ -10,6 +10,9 @@ Mario.TitleState = function () {
     this.bounce = null;
     this.font = null;
     this.lastKeyPressTime = 0; // Track last key press to prevent rapid toggling
+
+    // State transition flags for button handlers
+    this.GotoMapState = false;
 };
 
 Mario.TitleState.prototype = new Enjine.GameState();
@@ -85,6 +88,9 @@ Mario.TitleState.prototype.Enter = function () {
 
     // 🔄 Reset key press timer when entering title state
     this.lastKeyPressTime = 0;
+
+    // 🔄 Reset state transition flags
+    this.GotoMapState = false;
 
     // 🎹 Clear any stuck keyboard states to prevent input issues
     if (typeof Enjine.KeyboardInput !== 'undefined' && Enjine.KeyboardInput.Pressed) {
@@ -305,14 +311,9 @@ Mario.TitleState.prototype.startGame = function () {
         Enjine.Resources.PlaySound("powerup");
     }
 
-    // Create fresh MapState and change to it
-    console.log('🗺️ Creating fresh MapState for clean game entry...');
-    Mario.GlobalMapState = new Mario.MapState();
-
-    // Get the current context from the Application instance
-    if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
-        Enjine.Application.Instance.ChangeState(Mario.GlobalMapState);
-    }
+    // Set flag for state transition (will be handled by CheckForChange)
+    console.log('🗺️ Setting flag to start game...');
+    this.GotoMapState = true;
 };
 
 Mario.TitleState.prototype.openRewardsStore = function () {
@@ -332,8 +333,13 @@ Mario.TitleState.prototype.openRewardsStore = function () {
 };
 
 Mario.TitleState.prototype.CheckForChange = function (context) {
-    // Button navigation has replaced keyboard navigation
-    // This method is now primarily for state management
+    // Handle state transitions triggered by buttons
+    if (this.GotoMapState) {
+        console.log('🗺️ Executing state transition to MapState...');
+        // Create fresh MapState for clean game entry
+        Mario.GlobalMapState = new Mario.MapState();
+        context.ChangeState(Mario.GlobalMapState);
+    }
 };/**
  * 🧹 Clean up any existing modals or overlays
  */
