@@ -107,6 +107,260 @@
                 }
             }
             
+            /* Game Boy Style Mobile Layout */
+            .mobile-gameboy-layout {
+                display: none; /* Hidden by default */
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: #8B7355; /* Game Boy beige */
+                z-index: 1000;
+            }
+            
+            .mobile-gameboy-layout.active {
+                display: grid;
+                grid-template-columns: 1fr 2fr 1fr; /* Left controls, game, right controls */
+                grid-template-rows: 1fr;
+                align-items: center;
+                justify-items: center;
+                gap: 10px;
+                padding: 20px;
+                box-sizing: border-box;
+            }
+            
+            .gameboy-left-panel {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                width: 100%;
+            }
+            
+            .gameboy-center-panel {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                width: 100%;
+                background: #2C2C2C;
+                border-radius: 20px;
+                padding: 20px;
+                box-shadow: inset 0 4px 8px rgba(0,0,0,0.3);
+            }
+            
+            .gameboy-right-panel {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                width: 100%;
+            }
+            
+            /* Game Boy D-Pad */
+            .gameboy-dpad {
+                width: 120px;
+                height: 120px;
+                position: relative;
+                background: #333;
+                border-radius: 15px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            }
+            
+            .gameboy-dpad::before {
+                content: '';
+                position: absolute;
+                top: 35px;
+                left: 10px;
+                width: 100px;
+                height: 50px;
+                background: #555;
+                border-radius: 25px;
+            }
+            
+            .gameboy-dpad::after {
+                content: '';
+                position: absolute;
+                top: 10px;
+                left: 35px;
+                width: 50px;
+                height: 100px;
+                background: #555;
+                border-radius: 25px;
+            }
+            
+            .dpad-btn {
+                position: absolute;
+                background: #666;
+                border: none;
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                cursor: pointer;
+                border-radius: 8px;
+                z-index: 2;
+                transition: all 0.1s ease;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+            }
+            
+            .dpad-btn:active {
+                background: #888;
+                transform: scale(0.95);
+            }
+            
+            .dpad-up { top: 5px; left: 40px; width: 40px; height: 35px; }
+            .dpad-down { bottom: 5px; left: 40px; width: 40px; height: 35px; }
+            .dpad-left { top: 40px; left: 5px; width: 35px; height: 40px; }
+            .dpad-right { top: 40px; right: 5px; width: 35px; height: 40px; }
+            
+            /* Game Boy Action Buttons */
+            .gameboy-actions {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .action-buttons {
+                display: flex;
+                gap: 15px;
+                align-items: center;
+            }
+            
+            .action-btn {
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                border: none;
+                background: #8B0000;
+                color: white;
+                font-family: 'Press Start 2P', monospace;
+                font-size: 12px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                transition: all 0.1s ease;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-touch-callout: none;
+            }
+            
+            .action-btn.b-btn {
+                background: #8B0000;
+            }
+            
+            .action-btn.a-btn {
+                background: #006400;
+            }
+            
+            .action-btn:active {
+                transform: scale(0.9);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            }
+            
+            /* Game canvas in mobile layout */
+            .mobile-gameboy-layout #canvas {
+                max-width: 100%;
+                max-height: 60vh;
+                width: auto;
+                height: auto;
+                border-radius: 10px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            }
+            
+            /* Show Game Boy layout on touch devices in landscape */
+            @media (max-width: 768px) and (orientation: landscape) {
+                .touch-enabled .mobile-gameboy-layout.active {
+                    display: grid;
+                }
+                
+                .touch-enabled .game-container {
+                    display: none; /* Hide original layout */
+                }
+                
+                .gameboy-dpad {
+                    width: 100px;
+                    height: 100px;
+                }
+                
+                .gameboy-dpad::before {
+                    top: 30px;
+                    left: 8px;
+                    width: 84px;
+                    height: 40px;
+                }
+                
+                .gameboy-dpad::after {
+                    top: 8px;
+                    left: 30px;
+                    width: 40px;
+                    height: 84px;
+                }
+                
+                .dpad-up { top: 4px; left: 35px; width: 30px; height: 28px; }
+                .dpad-down { bottom: 4px; left: 35px; width: 30px; height: 28px; }
+                .dpad-left { top: 35px; left: 4px; width: 28px; height: 30px; }
+                .dpad-right { top: 35px; right: 4px; width: 28px; height: 30px; }
+                
+                .action-btn {
+                    width: 50px;
+                    height: 50px;
+                    font-size: 10px;
+                }
+            }
+            
+            @media (max-width: 480px) and (orientation: landscape) {
+                .mobile-gameboy-layout.active {
+                    grid-template-columns: 80px 1fr 80px;
+                    gap: 5px;
+                    padding: 10px;
+                }
+                
+                .gameboy-dpad {
+                    width: 70px;
+                    height: 70px;
+                }
+                
+                .gameboy-dpad::before {
+                    top: 22px;
+                    left: 6px;
+                    width: 58px;
+                    height: 26px;
+                }
+                
+                .gameboy-dpad::after {
+                    top: 6px;
+                    left: 22px;
+                    width: 26px;
+                    height: 58px;
+                }
+                
+                .dpad-btn {
+                    font-size: 10px;
+                }
+                
+                .dpad-up { top: 3px; left: 25px; width: 20px; height: 20px; }
+                .dpad-down { bottom: 3px; left: 25px; width: 20px; height: 20px; }
+                .dpad-left { top: 25px; left: 3px; width: 20px; height: 20px; }
+                .dpad-right { top: 25px; right: 3px; width: 20px; height: 20px; }
+                
+                .action-btn {
+                    width: 35px;
+                    height: 35px;
+                    font-size: 8px;
+                }
+                
+                .action-buttons {
+                    gap: 8px;
+                }
+            }
+            
             /* Setup Screen Styles */
             .setup-screen {
                 position: fixed;
@@ -436,6 +690,36 @@
             </div>
         </div>
 
+        <!-- Game Boy Style Mobile Layout -->
+        <div class="mobile-gameboy-layout" id="mobile-gameboy">
+            <!-- Left Panel - D-Pad -->
+            <div class="gameboy-left-panel">
+                <div class="gameboy-dpad">
+                    <button class="dpad-btn dpad-up" data-key="Up">▲</button>
+                    <button class="dpad-btn dpad-down" data-key="Down">▼</button>
+                    <button class="dpad-btn dpad-left" data-key="Left">◀</button>
+                    <button class="dpad-btn dpad-right" data-key="Right">▶</button>
+                </div>
+            </div>
+            
+            <!-- Center Panel - Game Screen -->
+            <div class="gameboy-center-panel">
+                <canvas id="mobile-canvas" width="640" height="480">
+                    <p>Your browser does not support the canvas element. Please update your browser!</p>
+                </canvas>
+            </div>
+            
+            <!-- Right Panel - Action Buttons -->
+            <div class="gameboy-right-panel">
+                <div class="gameboy-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn b-btn" data-key="A">A</button>
+                        <button class="action-btn a-btn" data-key="S">B</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Enjine Includes -->
         <script src="Enjine/core.js"></script>
         <script src="Enjine/gameCanvas.js"></script>
@@ -549,7 +833,183 @@
             }
         </script>
 
+        <script>
+            // Game Boy Mobile Layout Handler
+            class GameBoyLayout {
+                constructor() {
+                    this.isActive = false;
+                    this.gameInitialized = false;
+                    this.originalCanvas = null;
+                    this.mobileCanvas = null;
+                    this.app = null;
+                }
+                
+                init() {
+                    this.originalCanvas = document.getElementById('canvas');
+                    this.mobileCanvas = document.getElementById('mobile-canvas');
+                    this.setupControls();
+                    this.handleOrientationChange();
+                    
+                    // Listen for orientation changes
+                    window.addEventListener('orientationchange', () => {
+                        setTimeout(() => this.handleOrientationChange(), 500);
+                    });
+                    
+                    window.addEventListener('resize', () => {
+                        this.handleOrientationChange();
+                    });
+                }
+                
+                handleOrientationChange() {
+                    const isMobile = this.isTouchDevice();
+                    const isLandscape = window.innerWidth > window.innerHeight;
+                    
+                    if (isMobile && isLandscape && !this.isActive) {
+                        this.activateGameBoyLayout();
+                    } else if ((!isMobile || !isLandscape) && this.isActive) {
+                        this.deactivateGameBoyLayout();
+                    }
+                }
+                
+                isTouchDevice() {
+                    return ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+                }
+                
+                activateGameBoyLayout() {
+                    console.log('🎮 Activating Game Boy layout...');
+                    
+                    const mobileLayout = document.getElementById('mobile-gameboy');
+                    const gameScreen = document.getElementById('game-screen');
+                    
+                    // Show Game Boy layout
+                    mobileLayout.classList.add('active');
+                    
+                    // Transfer canvas context if game is running
+                    if (this.originalCanvas && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
+                        this.transferCanvasToMobile();
+                    }
+                    
+                    this.isActive = true;
+                    document.body.classList.add('gameboy-mode');
+                }
+                
+                deactivateGameBoyLayout() {
+                    console.log('🎮 Deactivating Game Boy layout...');
+                    
+                    const mobileLayout = document.getElementById('mobile-gameboy');
+                    
+                    // Hide Game Boy layout
+                    mobileLayout.classList.remove('active');
+                    
+                    // Transfer canvas back if needed
+                    if (this.mobileCanvas && window.Enjine && window.Enjine.Application && window.Enjine.Application.Instance) {
+                        this.transferCanvasToDesktop();
+                    }
+                    
+                    this.isActive = false;
+                    document.body.classList.remove('gameboy-mode');
+                }
+                
+                transferCanvasToMobile() {
+                    try {
+                        const app = window.Enjine.Application.Instance;
+                        if (app && app.canvas) {
+                            // Update the game engine to use the mobile canvas
+                            app.canvas.Canvas = this.mobileCanvas;
+                            app.canvas.BackBuffer = this.mobileCanvas.getContext('2d');
+                            app.canvas.BackBufferContext2D = this.mobileCanvas.getContext('2d');
+                            console.log('✅ Canvas transferred to mobile layout');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error transferring canvas to mobile:', error);
+                    }
+                }
+                
+                transferCanvasToDesktop() {
+                    try {
+                        const app = window.Enjine.Application.Instance;
+                        if (app && app.canvas) {
+                            // Update the game engine to use the original canvas
+                            app.canvas.Canvas = this.originalCanvas;
+                            app.canvas.BackBuffer = this.originalCanvas.getContext('2d');
+                            app.canvas.BackBufferContext2D = this.originalCanvas.getContext('2d');
+                            console.log('✅ Canvas transferred back to desktop layout');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error transferring canvas to desktop:', error);
+                    }
+                }
+                
+                setupControls() {
+                    const buttons = document.querySelectorAll('.dpad-btn, .action-btn');
+                    
+                    buttons.forEach(button => {
+                        const key = button.getAttribute('data-key');
+                        if (!key) return;
+                        
+                        const engineKey = Enjine.Keys[key];
+                        if (typeof engineKey === 'undefined') return;
+                        
+                        // Touch events
+                        button.addEventListener('touchstart', (e) => {
+                            e.preventDefault();
+                            if (window.Enjine && window.Enjine.KeyboardInput) {
+                                window.Enjine.KeyboardInput.Pressed[engineKey] = true;
+                                console.log(`🎮 Key pressed: ${key}`);
+                            }
+                            button.classList.add('active');
+                        });
+                        
+                        button.addEventListener('touchend', (e) => {
+                            e.preventDefault();
+                            if (window.Enjine && window.Enjine.KeyboardInput) {
+                                window.Enjine.KeyboardInput.Pressed[engineKey] = false;
+                                console.log(`🎮 Key released: ${key}`);
+                            }
+                            button.classList.remove('active');
+                        });
+                        
+                        // Mouse events for testing
+                        button.addEventListener('mousedown', (e) => {
+                            e.preventDefault();
+                            if (window.Enjine && window.Enjine.KeyboardInput) {
+                                window.Enjine.KeyboardInput.Pressed[engineKey] = true;
+                            }
+                            button.classList.add('active');
+                        });
+                        
+                        button.addEventListener('mouseup', (e) => {
+                            e.preventDefault();
+                            if (window.Enjine && window.Enjine.KeyboardInput) {
+                                window.Enjine.KeyboardInput.Pressed[engineKey] = false;
+                            }
+                            button.classList.remove('active');
+                        });
+                        
+                        button.addEventListener('mouseleave', (e) => {
+                            if (window.Enjine && window.Enjine.KeyboardInput) {
+                                window.Enjine.KeyboardInput.Pressed[engineKey] = false;
+                            }
+                            button.classList.remove('active');
+                        });
+                    });
+                    
+                    console.log('🎮 Game Boy controls initialized');
+                }
+            }
+            
+            // Initialize Game Boy layout
+            window.gameBoyLayout = new GameBoyLayout();
+        </script>
+
         <script>$(document).ready(function() { 
+            // Initialize Game Boy layout for mobile devices
+            if (typeof window.gameBoyLayout !== 'undefined') {
+                window.gameBoyLayout.init();
+                document.body.classList.add('touch-enabled');
+                console.log('🎮 Game Boy layout system ready');
+            }
+            
             // Game initialization is now handled by setup screen
             // The setup screen will call startGame() when ready
         });</script>
