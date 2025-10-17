@@ -314,6 +314,30 @@ Mario.TitleState.prototype.startGame = function () {
     // Set flag for state transition (will be handled by CheckForChange)
     console.log('🗺️ Setting flag to start game...');
     this.GotoMapState = true;
+
+    // Debug: Check if the flag was actually set
+    console.log('🔍 GotoMapState flag is now:', this.GotoMapState);
+
+    // Debug: Force check if CheckForChange works
+    setTimeout(() => {
+        console.log('🕐 After 1 second, GotoMapState flag is:', this.GotoMapState);
+        console.log('🕐 Attempting manual CheckForChange call...');
+
+        // Get the application context
+        if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
+            const app = Enjine.Application.Instance;
+            console.log('🕐 Application instance found:', !!app);
+
+            try {
+                this.CheckForChange(app);
+            } catch (error) {
+                console.error('🚨 Error in manual CheckForChange:', error);
+            }
+        } else {
+            console.error('🚨 No application instance found!');
+        }
+    }, 1000);
+
 };
 
 Mario.TitleState.prototype.openRewardsStore = function () {
@@ -335,23 +359,23 @@ Mario.TitleState.prototype.openRewardsStore = function () {
 Mario.TitleState.prototype.CheckForChange = function (context) {
     // Handle state transitions triggered by buttons
     if (this.GotoMapState) {
+        console.log('🗺️ CheckForChange: GotoMapState flag detected!');
         console.log('🗺️ Executing state transition to MapState...');
+        console.log('🗺️ Context available:', !!context);
+
         // Create fresh MapState for clean game entry
         Mario.GlobalMapState = new Mario.MapState();
+        console.log('🗺️ MapState created:', !!Mario.GlobalMapState);
+
         context.ChangeState(Mario.GlobalMapState);
+        console.log('🗺️ ChangeState called successfully');
+        return;
     }
 
-    if (typeof Mario.playSuperIntegration !== 'undefined') {
-        Mario.playSuperIntegration.openStore();
-    } else {
-        console.warn('PlaySuper integration not available');
-        alert('Rewards store not available. Please check your PlaySuper integration.');
+    // Debug: Log when CheckForChange is called but flag not set
+    if (this.GotoMapState === false) {
+        console.log('🔍 CheckForChange called, but GotoMapState is false');
     }
-};
-
-Mario.TitleState.prototype.CheckForChange = function (context) {
-    // Button navigation has replaced keyboard navigation
-    // This method is now primarily for state management
 };/**
  * 🧹 Clean up any existing modals or overlays
  */
