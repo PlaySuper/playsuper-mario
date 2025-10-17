@@ -142,13 +142,14 @@
                 grid-row: auto / span 1;
                 width: 100%;
                 height: 100%;
-                position: static; /* Override absolute positioning */
+                position: static; /* Override absolute positioning from base button style */
+                border-radius: 10px;
             }
 
             .mobile-controls .d-pad .up { grid-column: 2; grid-row: 1; }
             .mobile-controls .d-pad .left { grid-column: 1; grid-row: 2; }
             .mobile-controls .d-pad .right { grid-column: 3; grid-row: 2; }
-            .mobile-controls .d-pad .down { grid-column: 2; grid-row: 2; }
+            .mobile-controls .d-pad .down { grid-column: 2; grid-row: 3; }
 
 
             .mobile-controls .actions {
@@ -564,19 +565,6 @@
         <div class="mobile-controls">
             <div class="d-pad">
                 <button class="up">▲</button>
-                <button class="left">◀</button>
-                <button class="down">▼</button>
-                <button class="right">▶</button>
-            </div>
-            <div class="actions">
-                <button class="b-button">A</button> <!-- Run/Shoot -->
-                <button class="a-button">S</button> <!-- Jump -->
-            </div>
-        </div>
-
-        <!-- Mobile Controls -->
-        <div class="mobile-controls">
-            <div class="d-pad">
                 <button class="left">◀</button>
                 <button class="right">▶</button>
                 <button class="down">▼</button>
