@@ -17,6 +17,7 @@ Mario.WinState = function () {
 };
 
 Mario.WinState.prototype = new Enjine.GameState();
+Mario.WinState.prototype.constructor = Mario.WinState;
 
 Mario.WinState.prototype.Enter = function () {
     this.drawManager = new Enjine.DrawableManager();

@@ -13,6 +13,10 @@
         
 		<script src="enjine.min.js"></script>
 		<script src="mario.min.js"></script>
-        <script>$(document).ready(function() { new Enjine.Application().Initialize(new Mario.LoadingState(), 320, 240) });</script>
+        <script>$(document).ready(function() {
+            const gameApp = new Enjine.Application();
+            Enjine.Application.Instance = gameApp; // Make instance available for mobile controls and other components
+            gameApp.Initialize(new Mario.LoadingState(), 320, 240)
+        });</script>
 	</body>
 </html>

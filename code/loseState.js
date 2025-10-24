@@ -15,6 +15,7 @@ Mario.LoseState = function () {
 };
 
 Mario.LoseState.prototype = new Enjine.GameState();
+Mario.LoseState.prototype.constructor = Mario.LoseState;
 
 Mario.LoseState.prototype.Enter = function () {
     this.drawManager = new Enjine.DrawableManager();

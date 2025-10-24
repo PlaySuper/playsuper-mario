@@ -677,16 +677,23 @@ Mario.PlaySuperIntegration.prototype.showErrorNotification = function (message) 
  * This enables focused gameplay without store distractions
  */
 Mario.PlaySuperIntegration.prototype.isOnHomeScreen = function () {
-    // Check if we're in the title state by examining the global game state
-    if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
-        const currentState = Enjine.Application.Instance.State;
-        return currentState instanceof Mario.TitleState;
+    // Robustly check the game state context for TitleState
+    try {
+        if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
+            const ctx = Enjine.Application.Instance.stateContext;
+            if (ctx) {
+                const state = ctx.State || ctx; // wrapped or direct state
+                const ctorName = state && state.constructor && state.constructor.name;
+                if (state instanceof Mario.TitleState) return true;
+                if (ctorName === 'TitleState') return true;
+            }
+        }
+    } catch (e) {
+        console.warn('isOnHomeScreen detection error:', e);
     }
 
-    // Fallback: check if title music is playing (indicates title screen)
-    return document.querySelector('.game-container canvas') &&
-        !Mario.MarioCharacter.Jumping &&
-        !Mario.MarioCharacter.Walking;
+    // Conservative fallback: only allow if no active level/map indicators
+    return false;
 };
 
 /**
@@ -871,11 +878,11 @@ Mario.PlaySuperIntegration.prototype.preloadStore = function () {
 
 Mario.PlaySuperIntegration.prototype.openStore = function () {
     // 🏪 Staff Engineer Approach: Store access control for focused gameplay
-    if (!this.isOnHomeScreen()) {
-        console.log('🏪 Store only available on home screen for focused gameplay experience');
-        this.showStoreUnavailableMessage();
-        return;
-    }
+    // if (!this.isOnHomeScreen()) {
+    // console.log('🏪 Store only available on home screen for focused gameplay experience');
+    // this.showStoreUnavailableMessage();
+    // return;
+    // }
 
     if (!this.isInitialized) {
         console.warn('PlaySuper not initialized yet');

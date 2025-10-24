@@ -13,6 +13,7 @@ Mario.TitleState = function () {
 };
 
 Mario.TitleState.prototype = new Enjine.GameState();
+Mario.TitleState.prototype.constructor = Mario.TitleState;
 
 Mario.TitleState.prototype.Enter = function () {
     console.log('🏠 Entering title state...');
@@ -93,6 +94,11 @@ Mario.TitleState.prototype.Enter = function () {
     // 🔄 Reset key press timer when entering title state
     this.lastKeyPressTime = 0;
 
+    // Set mobile controls for title screen
+    if (Mario.mobileControls) {
+        Mario.mobileControls.showTitleControls();
+    }
+
     // 🎹 Clear any stuck keyboard states to prevent input issues
     if (typeof Enjine.KeyboardInput !== 'undefined' && Enjine.KeyboardInput.Pressed) {
         // Clear all pressed key states
@@ -168,23 +174,23 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
     const currentTime = Date.now();
 
     // Debug keyboard input with debouncing
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S) &&
-        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
+    // Start game on jump action (Jump button) or S key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('jump') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
         console.log('S key pressed - starting game...');
         this.lastKeyPressTime = currentTime;
 
         // Always create a fresh MapState to prevent state corruption issues
         // This ensures clean transitions especially after returning from levels
         console.log('🗺️ Creating fresh MapState for clean game entry...');
-        Mario.GlobalMapState = new Mario.MapState();
-
-        context.ChangeState(Mario.GlobalMapState);
+        context.ChangeState(new Mario.MapState());
         return;
     }
 
     // 🏪 Store access with R key (Rewards)
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.R) &&
-        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
+    // Open store on run action (Run button) or R key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('run') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.R)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
         console.log('🏪 Opening store from home screen...');
         this.lastKeyPressTime = currentTime;
         if (typeof Mario.playSuperIntegration !== 'undefined') {
@@ -196,8 +202,9 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
     }
 
     // Daily rewards access with D key (Daily)
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.D) &&
-        (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
+    // Open daily rewards on duck action (D-pad down) or D key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('duck') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.D)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
         console.log('Opening daily rewards...');
         this.lastKeyPressTime = currentTime;
         this.showDailyRewards();

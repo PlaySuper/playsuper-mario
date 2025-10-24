@@ -35,6 +35,7 @@ Mario.LevelState = function (difficulty, type) {
 };
 
 Mario.LevelState.prototype = new Enjine.GameState();
+Mario.LevelState.prototype.constructor = Mario.LevelState;
 
 Mario.LevelState.prototype.Enter = function () {
     // 🏎️ Shorter levels for quick, addictive gameplay (160 vs 320)
@@ -81,8 +82,13 @@ Mario.LevelState.prototype.Enter = function () {
 
     this.Sprites.Add(Mario.MarioCharacter);
     this.StartTime = 1;
-    this.TimeLeft = 15; // Fast-paced 15-second levels for maximum engagement!
+    this.TimeLeft = 30; // 30-second levels for proper gameplay timing
     this.TimerWarning = false; // Track warning state
+
+    console.log('LevelState: Timer reset to 30 seconds for new level attempt');
+
+    // Reset timer warning state
+    this.resetTimer();
 
     this.GotoMapState = false;
     this.GotoLoseState = false;
@@ -96,6 +102,21 @@ Mario.LevelState.prototype.Enter = function () {
     }
 
     console.log('Level state entered - key input ready');
+
+    // Force mobile controls to update screen detection for level
+    if (Mario.mobileControls) {
+        setTimeout(() => {
+            Mario.mobileControls.showLevelControls();
+            console.log('LevelState: Forced mobile controls to show LEVEL controls');
+        }, 100);
+    }
+};
+
+// Method to reset the timer (useful for level restarts or respawns)
+Mario.LevelState.prototype.resetTimer = function () {
+    this.TimeLeft = 30; // Reset to 30 seconds
+    this.TimerWarning = false; // Reset warning state
+    console.log('LevelState: Timer reset to 30 seconds');
 };
 
 Mario.LevelState.prototype.Exit = function () {
@@ -132,7 +153,7 @@ Mario.LevelState.prototype.Update = function (delta) {
     // 🏠 Check for Home key (H) to return to title screen
     // Add debouncing to prevent rapid state changes
     const currentTime = Date.now();
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) &&
+    if ((Mario.inputController ? Mario.inputController.isActionActive('home') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H)) &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
         console.log('🏠 Returning to home screen...');
         this.lastKeyPressTime = currentTime;
@@ -145,10 +166,19 @@ Mario.LevelState.prototype.Update = function (delta) {
         return;
     }
 
-    this.TimeLeft -= delta;
-    if ((this.TimeLeft | 0) === 0) {
-        // Don't trigger death if player is already winning!
-        if (Mario.MarioCharacter.WinTime === 0) {
+    // Timer countdown: subtract delta (time since last frame in seconds)
+    // Delta is approximately 0.033 seconds per frame (30 FPS)
+    // Note: Timer pauses when world is paused (during death animation, etc.)
+    if (!this.Paused) {
+        this.TimeLeft -= delta;
+    }
+
+    // Ensure timer doesn't go negative and trigger death exactly when display hits 0
+    if (this.TimeLeft <= 0) {
+        this.TimeLeft = 0;
+        // Don't trigger death if player is already winning or already dead!
+        if (Mario.MarioCharacter.WinTime === 0 && Mario.MarioCharacter.DeathTime === 0) {
+            console.log('⏰ Time\'s up! Triggering player death...');
             Mario.MarioCharacter.Die();
         }
     }
@@ -160,7 +190,8 @@ Mario.LevelState.prototype.Update = function (delta) {
         if (typeof Enjine !== 'undefined' && Enjine.Resources) {
             Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
         }
-        console.log('⏰ Timer warning: Only', Math.ceil(this.TimeLeft), 'seconds left!');
+        var displayTime = Math.max(0, Math.floor(this.TimeLeft + 0.99));
+        console.log('⏰ Timer warning: Only', displayTime, 'seconds left!');
     }
 
     if (this.StartTime > 0) {
@@ -347,9 +378,14 @@ Mario.LevelState.prototype.Draw = function (context) {
     this.DrawStringShadow(context, "WORLD", 24, 0);
     this.DrawStringShadow(context, " " + Mario.MarioCharacter.LevelString, 24, 1);
     this.DrawStringShadow(context, "TIME", 34, 0);
-    time = this.TimeLeft | 0;
-    if (time < 0) {
-        time = 0;
+    // Display timer as integer seconds remaining (30, 29, 28, ..., 1, 0)
+    // Math.floor(this.TimeLeft + 0.99) ensures proper countdown display:
+    // When TimeLeft = 29.7, shows 30; when TimeLeft = 29.3, shows 29
+    time = Math.max(0, Math.floor(this.TimeLeft + 0.99));
+
+    // Only log timer occasionally to avoid console spam
+    if (Math.floor(this.TimeLeft) !== Math.floor(this.TimeLeft - this.Delta)) {
+        console.log('LevelState: Timer countdown - TimeLeft:', this.TimeLeft.toFixed(2), 'seconds, display time:', time, 'seconds');
     }
 
     // 🏠 Home button indicator - small and unobtrusive
