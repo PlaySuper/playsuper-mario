@@ -187,9 +187,9 @@ Mario.LevelState.prototype.Update = function (delta) {
     if (this.TimeLeft <= 5 && !this.TimerWarning) {
         this.TimerWarning = true;
         // Play urgency sound to build tension
-        if (typeof Enjine !== 'undefined' && Enjine.Resources) {
-            Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
-        }
+        // if (typeof Enjine !== 'undefined' && Enjine.Resources) {
+        //     Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
+        // }
     }
 
     if (this.StartTime > 0) {
@@ -390,19 +390,19 @@ Mario.LevelState.prototype.Draw = function (context) {
     this.DrawStringShadow(context, "H:HOME", 0, 14);
 
     // Visual timer warning - flash red when time is critical
-    if (this.TimerWarning && time <= 5) {
-        // Flash effect - change color every 0.5 seconds for urgency
-        var flashTimer = Date.now() % 1000;
-        if (flashTimer < 500) {
-            // Draw in red for urgency (simulate by drawing multiple times for bold effect)
-            this.DrawStringShadow(context, " " + time, 34, 1);
-            this.DrawStringShadow(context, " " + time, 35, 1); // Double draw for "bold" red effect
-        } else {
-            this.DrawStringShadow(context, " " + time, 34, 1);
-        }
-    } else {
-        this.DrawStringShadow(context, " " + time, 34, 1);
-    }
+    // if (this.TimerWarning && time <= 5) {
+    //     // Flash effect - change color every 0.5 seconds for urgency
+    //     var flashTimer = Date.now() % 1000;
+    //     if (flashTimer < 500) {
+    //         // Draw in red for urgency (simulate by drawing multiple times for bold effect)
+    //         this.DrawStringShadow(context, " " + time, 34, 1);
+    //         this.DrawStringShadow(context, " " + time, 35, 1); // Double draw for "bold" red effect
+    //     } else {
+    //         this.DrawStringShadow(context, " " + time, 34, 1);
+    //     }
+    // } else {
+    //     this.DrawStringShadow(context, " " + time, 34, 1);
+    // }
 
     if (this.StartTime > 0) {
         t = this.StartTime + this.Delta - 2;
