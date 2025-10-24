@@ -85,7 +85,7 @@ Mario.LevelState.prototype.Enter = function () {
     this.TimeLeft = 30; // 30-second levels for proper gameplay timing
     this.TimerWarning = false; // Track warning state
 
-    console.log('LevelState: Timer reset to 30 seconds for new level attempt');
+    Mario.playSuperConfig.DebugLog('LevelState: Timer reset to 30 seconds for new level attempt');
 
     // Reset timer warning state
     this.resetTimer();
@@ -101,13 +101,13 @@ Mario.LevelState.prototype.Enter = function () {
         Mario.MarioCharacter.DeathDiscountTriggered = false;
     }
 
-    console.log('Level state entered - key input ready');
+    Mario.playSuperConfig.DebugLog('Level state entered - key input ready');
 
     // Force mobile controls to update screen detection for level
     if (Mario.mobileControls) {
         setTimeout(() => {
             Mario.mobileControls.showLevelControls();
-            console.log('LevelState: Forced mobile controls to show LEVEL controls');
+            Mario.playSuperConfig.DebugLog('LevelState: Forced mobile controls to show LEVEL controls');
         }, 100);
     }
 };
@@ -116,7 +116,7 @@ Mario.LevelState.prototype.Enter = function () {
 Mario.LevelState.prototype.resetTimer = function () {
     this.TimeLeft = 30; // Reset to 30 seconds
     this.TimerWarning = false; // Reset warning state
-    console.log('LevelState: Timer reset to 30 seconds');
+    Mario.playSuperConfig.DebugLog('LevelState: Timer reset to 30 seconds');
 };
 
 Mario.LevelState.prototype.Exit = function () {
@@ -155,7 +155,7 @@ Mario.LevelState.prototype.Update = function (delta) {
     const currentTime = Date.now();
     if ((Mario.inputController ? Mario.inputController.isActionActive('home') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H)) &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🏠 Returning to home screen...');
+        Mario.playSuperConfig.DebugLog('🏠 Returning to home screen...');
         this.lastKeyPressTime = currentTime;
         // Stop any PlaySuper integration activities
         if (typeof Mario.playSuperIntegration !== 'undefined') {
@@ -178,7 +178,7 @@ Mario.LevelState.prototype.Update = function (delta) {
         this.TimeLeft = 0;
         // Don't trigger death if player is already winning or already dead!
         if (Mario.MarioCharacter.WinTime === 0 && Mario.MarioCharacter.DeathTime === 0) {
-            console.log('⏰ Time\'s up! Triggering player death...');
+            Mario.playSuperConfig.DebugLog('⏰ Time\'s up! Triggering player death...');
             Mario.MarioCharacter.Die();
         }
     }
@@ -191,7 +191,7 @@ Mario.LevelState.prototype.Update = function (delta) {
             Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
         }
         var displayTime = Math.max(0, Math.floor(this.TimeLeft + 0.99));
-        console.log('⏰ Timer warning: Only', displayTime, 'seconds left!');
+        Mario.playSuperConfig.DebugLog('⏰ Timer warning: Only', displayTime, 'seconds left!');
     }
 
     if (this.StartTime > 0) {
@@ -385,7 +385,7 @@ Mario.LevelState.prototype.Draw = function (context) {
 
     // Only log timer occasionally to avoid console spam
     if (Math.floor(this.TimeLeft) !== Math.floor(this.TimeLeft - this.Delta)) {
-        console.log('LevelState: Timer countdown - TimeLeft:', this.TimeLeft.toFixed(2), 'seconds, display time:', time, 'seconds');
+        Mario.playSuperConfig.DebugLog('LevelState: Timer countdown - TimeLeft:', this.TimeLeft.toFixed(2), 'seconds, display time:', time, 'seconds');
     }
 
     // 🏠 Home button indicator - small and unobtrusive
@@ -573,7 +573,7 @@ Mario.LevelState.prototype.CheckForChange = function (context) {
     else {
         if (this.GotoMapState) {
             // Create a fresh MapState to prevent state corruption issues
-            console.log('🗺️ Creating fresh MapState when returning from level...');
+            Mario.playSuperConfig.DebugLog('🗺️ Creating fresh MapState when returning from level...');
             Mario.GlobalMapState = new Mario.MapState();
             context.ChangeState(Mario.GlobalMapState);
         }

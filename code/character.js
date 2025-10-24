@@ -137,14 +137,14 @@ Mario.Character.prototype.Move = function () {
     // DEBUG: trace input state at start of Move
     try {
         if (Mario.inputController) {
-            console.log('Character.Move: inputs -> jump=', Mario.inputController.isActionActive('jump'),
+            Mario.playSuperConfig.DebugLog('Character.Move: inputs -> jump=', Mario.inputController.isActionActive('jump'),
                 'duck=', Mario.inputController.isActionActive('duck'),
                 'left=', Mario.inputController.isActionActive('left'),
                 'right=', Mario.inputController.isActionActive('right'),
                 'OnGround=', this.OnGround, 'MayJump=', this.MayJump);
         }
     } catch (e) {
-        console.log('Character.Move: input snapshot error', e);
+        Mario.playSuperConfig.DebugLog('Character.Move: input snapshot error', e);
     }
     if (this.WinTime > 0) {
         this.WinTime++;
@@ -197,10 +197,10 @@ Mario.Character.prototype.Move = function () {
 
     if (this.OnGround) {
         const duckInput = Mario.inputController ? Mario.inputController.isActionActive('duck') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Down);
-        console.log('Character: Duck check - OnGround:', this.OnGround, 'duckInput:', duckInput, 'Ducking:', this.Ducking);
+        Mario.playSuperConfig.DebugLog('Character: Duck check - OnGround:', this.OnGround, 'duckInput:', duckInput, 'Ducking:', this.Ducking);
         if (duckInput) {
             this.Ducking = true;
-            console.log('Character: Duck activated');
+            Mario.playSuperConfig.DebugLog('Character: Duck activated');
         } else {
             this.Ducking = false;
         }
@@ -216,14 +216,14 @@ Mario.Character.prototype.Move = function () {
     const jumpInput = Mario.inputController ? Mario.inputController.isActionActive('jump') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S);
     const jumpCondition = jumpInput || (this.JumpTime < 0 && !this.OnGround && !this.Sliding);
 
-    console.log('Character: Jump check - jumpInput:', jumpInput, 'JumpTime:', this.JumpTime, 'OnGround:', this.OnGround, 'Sliding:', this.Sliding, 'MayJump:', this.MayJump, 'jumpCondition:', jumpCondition);
+    Mario.playSuperConfig.DebugLog('Character: Jump check - jumpInput:', jumpInput, 'JumpTime:', this.JumpTime, 'OnGround:', this.OnGround, 'Sliding:', this.Sliding, 'MayJump:', this.MayJump, 'jumpCondition:', jumpCondition);
 
     if (jumpCondition) {
         if (this.JumpTime < 0) {
             this.Xa = this.XJumpSpeed;
             this.Ya = -this.JumpTime * this.YJumpSpeed;
             this.JumpTime++;
-            console.log('Character: Continuing jump - JumpTime:', this.JumpTime);
+            Mario.playSuperConfig.DebugLog('Character: Continuing jump - JumpTime:', this.JumpTime);
         } else if (this.OnGround && this.MayJump) {
             Enjine.Resources.PlaySound("jump");
             this.XJumpSpeed = 0;
@@ -232,7 +232,7 @@ Mario.Character.prototype.Move = function () {
             this.Ya = this.JumpTime * this.YJumpSpeed;
             this.OnGround = false;
             this.Sliding = false;
-            console.log('Character: Started ground jump - JumpTime:', this.JumpTime);
+            Mario.playSuperConfig.DebugLog('Character: Started ground jump - JumpTime:', this.JumpTime);
         } else if (this.Sliding && this.MayJump) {
             Enjine.Resources.PlaySound("jump");
             this.XJumpSpeed = -this.Facing * 6;
@@ -243,16 +243,16 @@ Mario.Character.prototype.Move = function () {
             this.OnGround = false;
             this.Sliding = false;
             this.Facing = -this.Facing;
-            console.log('Character: Started sliding jump - JumpTime:', this.JumpTime);
+            Mario.playSuperConfig.DebugLog('Character: Started sliding jump - JumpTime:', this.JumpTime);
         } else if (this.JumpTime > 0) {
             this.Xa += this.XJumpSpeed;
             this.Ya = this.JumpTime * this.YJumpSpeed;
             this.JumpTime--;
-            console.log('Character: Continuing jump ascent - JumpTime:', this.JumpTime);
+            Mario.playSuperConfig.DebugLog('Character: Continuing jump ascent - JumpTime:', this.JumpTime);
         }
     } else {
         this.JumpTime = 0;
-        console.log('Character: Jump reset - JumpTime set to 0');
+        Mario.playSuperConfig.DebugLog('Character: Jump reset - JumpTime set to 0');
     }
 
     if ((Mario.inputController ? Mario.inputController.isActionActive('left') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Left)) && !this.Ducking) {
@@ -633,13 +633,13 @@ Mario.Character.prototype.Win = function () {
 Mario.Character.prototype.Die = function () {
     // Don't process death if already winning
     if (this.WinTime > 0) {
-        console.log('Character: Ignoring death because player is winning');
+        Mario.playSuperConfig.DebugLog('Character: Ignoring death because player is winning');
         return;
     }
 
     // Don't trigger discount system multiple times for the same death
     if (this.DeathDiscountTriggered) {
-        console.log('Character: Death discount already triggered, skipping');
+        Mario.playSuperConfig.DebugLog('Character: Death discount already triggered, skipping');
         return;
     }
 
@@ -651,7 +651,7 @@ Mario.Character.prototype.Die = function () {
     Enjine.Resources.PlaySound("death");
     this.SetLarge(false, false);
 
-    console.log('Player died - triggering scratch card reward system...');
+    Mario.playSuperConfig.DebugLog('Player died - triggering scratch card reward system...');
 
     // Trigger discount system on death
     if (typeof Mario.discountSystem !== 'undefined' && Mario.discountSystem.canGenerateDiscount()) {

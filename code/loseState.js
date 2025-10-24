@@ -90,7 +90,7 @@ Mario.LoseState.prototype.checkForDiscountOffer = function () {
         Mario.discountSystem.isInitialized &&
         Mario.discountSystem.canGenerateDiscount()) {
 
-        console.log('LoseState: Checking for recovery discount offer...');
+        Mario.playSuperConfig.DebugLog('LoseState: Checking for recovery discount offer...');
 
         // Add contextual message about possible discounts
         if (this.font.Strings.length < 3) {
@@ -102,7 +102,7 @@ Mario.LoseState.prototype.checkForDiscountOffer = function () {
             Mario.discountSystem.onPlayerDeath();
         }, 1000);
     } else {
-        console.log('LoseState: No discount available or system not ready');
+        Mario.playSuperConfig.DebugLog('LoseState: No discount available or system not ready');
 
         // Show alternative message
         if (this.font.Strings.length < 3) {
@@ -112,7 +112,7 @@ Mario.LoseState.prototype.checkForDiscountOffer = function () {
 };
 
 Mario.LoseState.prototype.handleRetryWithDiscount = function () {
-    console.log('LoseState: Player wants to retry');
+    Mario.playSuperConfig.DebugLog('LoseState: Player wants to retry');
 
     // If discount system is available, show a special retry offer
     if (typeof Mario.discountSystem !== 'undefined' &&
@@ -121,11 +121,11 @@ Mario.LoseState.prototype.handleRetryWithDiscount = function () {
         // Show a quick retry discount if available
         Mario.discountSystem.generateDiscountCode()
             .then(discount => {
-                console.log('Retry discount available:', discount);
+                Mario.playSuperConfig.DebugLog('Retry discount available:', discount);
                 Mario.discountSystem.showDiscountModal(discount);
             })
             .catch(error => {
-                console.log('No retry discount available:', error);
+                Mario.playSuperConfig.DebugLog('No retry discount available:', error);
                 // Just restart the level
                 this.restartLevel();
             });
@@ -136,7 +136,7 @@ Mario.LoseState.prototype.handleRetryWithDiscount = function () {
 };
 
 Mario.LoseState.prototype.restartLevel = function () {
-    console.log('LoseState: Restarting level...');
+    Mario.playSuperConfig.DebugLog('LoseState: Restarting level...');
 
     // Reset Mario's state and restart the level
     if (typeof Mario.MarioCharacter !== 'undefined') {

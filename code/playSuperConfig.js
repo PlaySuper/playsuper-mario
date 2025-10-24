@@ -7,6 +7,9 @@
 window.Mario = window.Mario || {};
 
 Mario.playSuperConfig = {
+    // Flag to enable or disable console logging across the game
+    DEBUG_MODE: false,
+
     // Default environment (can be 'development' or 'production')
     environment: 'development',
 
@@ -80,5 +83,12 @@ Mario.playSuperConfig = {
             available: Object.keys(this.environments),
             baseUrl: this.environments[this.environment].baseUrl
         };
+    },
+
+    // Centralized debug logger
+    DebugLog: function (...args) {
+        if (this.DEBUG_MODE) {
+            console.log(...args);
+        }
     }
 };

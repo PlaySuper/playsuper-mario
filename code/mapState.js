@@ -164,7 +164,7 @@ Mario.MapState.prototype.NextWorld = function () {
 
     // 🔄 Reset key press timer when entering map state
     this.lastKeyPressTime = 0;
-    console.log('Map state entered - key input ready');
+    Mario.playSuperConfig.DebugLog('Map state entered - key input ready');
 };
 
 Mario.MapState.prototype.GenerateLevel = function () {
@@ -495,7 +495,7 @@ Mario.MapState.prototype.Update = function (delta) {
     const currentTime = Date.now();
     if (Mario.inputController.isActionActive('home') &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🏠 Returning to home screen from map...');
+        Mario.playSuperConfig.DebugLog('🏠 Returning to home screen from map...');
         this.lastKeyPressTime = currentTime;
         this.GotoTitleState = true;
         return;
@@ -523,13 +523,13 @@ Mario.MapState.prototype.Update = function (delta) {
 
         // DEBUG: log the current input controller actions observed by MapState
         try {
-            console.log('MapState: input snapshot - left=', Mario.inputController.isActionActive('left'),
+            Mario.playSuperConfig.DebugLog('MapState: input snapshot - left=', Mario.inputController.isActionActive('left'),
                 'right=', Mario.inputController.isActionActive('right'),
                 'up=', Mario.inputController.isActionActive('up'),
                 'down=', Mario.inputController.isActionActive('down'),
                 'jump=', Mario.inputController.isActionActive('jump'));
         } catch (e) {
-            console.log('MapState: input snapshot unavailable', e);
+            Mario.playSuperConfig.DebugLog('MapState: input snapshot unavailable', e);
         }
 
         // Detect rising edge of jump (press) to enter a level reliably
@@ -574,19 +574,19 @@ Mario.MapState.prototype.Update = function (delta) {
         this.CanEnterLevel = !currentJump;
 
         if (Mario.inputController.isActionActive('left')) {
-            console.log('MapState: TryWalking left');
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking left');
             this.TryWalking(-1, 0);
         }
         if (Mario.inputController.isActionActive('right')) {
-            console.log('MapState: TryWalking right');
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking right');
             this.TryWalking(1, 0);
         }
         if (Mario.inputController.isActionActive('up')) {
-            console.log('MapState: TryWalking up');
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking up');
             this.TryWalking(0, -1);
         }
         if (Mario.inputController.isActionActive('down')) {
-            console.log('MapState: TryWalking down');
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking down');
             this.TryWalking(0, 1);
         }
     }
