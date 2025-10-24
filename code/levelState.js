@@ -169,9 +169,9 @@ Mario.LevelState.prototype.Update = function (delta) {
     // Timer countdown: subtract delta (time since last frame in seconds)
     // Delta is approximately 0.033 seconds per frame (30 FPS)
     // Note: Timer pauses when world is paused (during death animation, etc.)
-    if (!this.Paused) {
-        this.TimeLeft -= delta;
-    }
+    // if (!this.Paused) {
+    this.TimeLeft -= delta;
+    // }
 
     // Ensure timer doesn't go negative and trigger death exactly when display hits 0
     if (this.TimeLeft <= 0) {
@@ -190,8 +190,6 @@ Mario.LevelState.prototype.Update = function (delta) {
         if (typeof Enjine !== 'undefined' && Enjine.Resources) {
             Enjine.Resources.PlaySound("bump"); // Use existing sound for urgency
         }
-        var displayTime = Math.max(0, Math.floor(this.TimeLeft + 0.99));
-        Mario.playSuperConfig.DebugLog('⏰ Timer warning: Only', displayTime, 'seconds left!');
     }
 
     if (this.StartTime > 0) {
