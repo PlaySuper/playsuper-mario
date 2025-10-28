@@ -38,8 +38,13 @@ Mario.LevelState.prototype = new Enjine.GameState();
 Mario.LevelState.prototype.constructor = Mario.LevelState;
 
 Mario.LevelState.prototype.Enter = function () {
-    // 🏎️ Shorter levels for quick, addictive gameplay (160 vs 320)
-    var levelGenerator = new Mario.LevelGenerator(160, 15), i = 0, scrollSpeed = 0, w = 0, h = 0, bgLevelGenerator = null;
+    // Generate unique level based on world and current level index
+    var levelWidth = 160 + (Mario.GlobalMapState.currentLevelIndex * 20); // Levels get progressively longer
+    var levelHeight = 15;
+
+    console.log('🎮 Generating level', Mario.GlobalMapState.currentLevelIndex + 1, 'with width:', levelWidth, 'difficulty:', this.LevelDifficulty, 'type:', this.LevelType);
+
+    var levelGenerator = new Mario.LevelGenerator(levelWidth, levelHeight), i = 0, scrollSpeed = 0, w = 0, h = 0, bgLevelGenerator = null;
     this.Level = levelGenerator.CreateLevel(this.LevelType, this.LevelDifficulty);
 
     // Trigger PlaySuper level start tracking
@@ -376,38 +381,37 @@ Mario.LevelState.prototype.Draw = function (context) {
     this.DrawStringShadow(context, "WORLD", 24, 0);
     this.DrawStringShadow(context, " " + Mario.MarioCharacter.LevelString, 24, 1);
     this.DrawStringShadow(context, "TIME", 34, 0);
-    // Display timer as integer seconds remaining (30, 29, 28, ..., 1, 0)
-    // Math.floor(this.TimeLeft + 0.99) ensures proper countdown display:
-    // When TimeLeft = 29.7, shows 30; when TimeLeft = 29.3, shows 29
-    time = Math.max(0, Math.floor(this.TimeLeft + 0.99));
-
-    // Only log timer occasionally to avoid console spam
-    if (Math.floor(this.TimeLeft) !== Math.floor(this.TimeLeft - this.Delta)) {
-        Mario.playSuperConfig.DebugLog('LevelState: Timer countdown - TimeLeft:', this.TimeLeft.toFixed(2), 'seconds, display time:', time, 'seconds');
-    }
 
     // 🏠 Home button indicator - small and unobtrusive
     this.DrawStringShadow(context, "H:HOME", 0, 14);
 
-    // Visual timer warning - flash red when time is critical
-    // if (this.TimerWarning && time <= 5) {
-    //     // Flash effect - change color every 0.5 seconds for urgency
-    //     var flashTimer = Date.now() % 1000;
-    //     if (flashTimer < 500) {
-    //         // Draw in red for urgency (simulate by drawing multiple times for bold effect)
-    //         this.DrawStringShadow(context, " " + time, 34, 1);
-    //         this.DrawStringShadow(context, " " + time, 35, 1); // Double draw for "bold" red effect
-    //     } else {
-    //         this.DrawStringShadow(context, " " + time, 34, 1);
-    //     }
-    // } else {
-    //     this.DrawStringShadow(context, " " + time, 34, 1);
-    // }
+    // Draw coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 4, 25);
+        } catch (error) {
+            console.log('LevelState: DrawCoinBalance failed:', error.message);
+        }
+    }
 
     if (this.StartTime > 0) {
         t = this.StartTime + this.Delta - 2;
         t = t * t * 0.6;
         this.RenderBlackout(context, 160, 120, t | 0);
+    }
+
+    // Display timer after blackout so it's always visible
+    time = Math.max(0, Math.floor(this.TimeLeft + 0.99));
+    if (this.TimerWarning && time <= 5) {
+        // Flash the timer by alternating visibility when time is low
+        var flashTimer = Date.now() % 1000;
+        if (flashTimer < 500) {
+            this.DrawStringShadow(context, " " + time, 34, 1);
+        }
+        // Don't draw during else period to create blinking effect
+    } else {
+        // Normal timer display
+        this.DrawStringShadow(context, " " + time, 34, 1);
     }
 
     if (Mario.MarioCharacter.WinTime > 0) {
@@ -416,7 +420,7 @@ Mario.LevelState.prototype.Draw = function (context) {
         t = t * t * 0.2;
 
         if (t > 900) {
-            //TODO: goto map state with level won
+            //Level won - update progress and return to map
             Mario.GlobalMapState.LevelWon();
             this.GotoMapState = true;
         }
@@ -570,9 +574,8 @@ Mario.LevelState.prototype.CheckForChange = function (context) {
     }
     else {
         if (this.GotoMapState) {
-            // Create a fresh MapState to prevent state corruption issues
-            Mario.playSuperConfig.DebugLog('🗺️ Creating fresh MapState when returning from level...');
-            Mario.GlobalMapState = new Mario.MapState();
+            // Return to the existing GlobalMapState with preserved progress
+            Mario.playSuperConfig.DebugLog('🗺️ Returning to GlobalMapState with preserved progress...');
             context.ChangeState(Mario.GlobalMapState);
         }
     }

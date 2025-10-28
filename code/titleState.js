@@ -47,6 +47,8 @@ Mario.TitleState.prototype.Enter = function () {
     this.dailyFont = Mario.SpriteCuts.CreateWhiteFont(); // White for maximum contrast
     this.dailyFont.Strings[0] = { String: "Press D for Daily Rewards", X: 68, Y: 162 }; // Centered on background
 
+    this.balanceFont = Mario.SpriteCuts.CreateYellowFont();
+
     this.logoY = 20;
 
     // Initialize daily rewards system
@@ -152,6 +154,15 @@ Mario.TitleState.prototype.Draw = function (context) {
 
     // Draw daily rewards text with better visibility
     this.dailyFont.Draw(context, this.Camera);
+
+    // Draw the coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 10, 10);
+        } catch (error) {
+            console.log('TitleState: DrawCoinBalance failed:', error.message);
+        }
+    }
 };
 
 // Helper function to draw rounded rectangles for better visual appeal
@@ -180,10 +191,14 @@ Mario.TitleState.prototype.CheckForChange = function (context) {
         console.log('S key pressed - starting game...');
         this.lastKeyPressTime = currentTime;
 
-        // Always create a fresh MapState to prevent state corruption issues
-        // This ensures clean transitions especially after returning from levels
-        console.log('🗺️ Creating fresh MapState for clean game entry...');
-        context.ChangeState(new Mario.MapState());
+        // Use or create the global map state for persistent progress
+        if (!Mario.GlobalMapState) {
+            console.log('🗺️ Creating new GlobalMapState for first game...');
+            Mario.GlobalMapState = new Mario.MapState();
+        } else {
+            console.log('🗺️ Reusing existing GlobalMapState with player progress...');
+        }
+        context.ChangeState(Mario.GlobalMapState);
         return;
     }
 

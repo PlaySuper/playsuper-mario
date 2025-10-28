@@ -15,6 +15,7 @@ Mario.PlaySuperIntegration = function () {
     this.apiUrl = null;
     this.storeUrl = null;
     this.isMobile = this.detectMobile();
+    this.playerBalance = 0;
 
     // Timer-based coin distribution (every 10 seconds)
     this.pendingCoins = 0;
@@ -77,6 +78,9 @@ Mario.PlaySuperIntegration.prototype.init = function () {
             console.log('Coins per level:', this.rewardsPerLevel);
             console.log('Press "T" key to show treasure chest with real rewards!');
 
+            // Get initial player balance
+            this.getPlayerBalance();
+
             // Preload the store iframe for instant access
             console.log('Starting store preload for optimal user experience...');
             this.preloadStore();
@@ -88,6 +92,43 @@ Mario.PlaySuperIntegration.prototype.init = function () {
         })
         .catch(error => {
             console.error('Failed to initialize PlaySuper:', error);
+        });
+};
+
+Mario.PlaySuperIntegration.prototype.getPlayerBalance = function () {
+    if (!this.isInitialized) {
+        console.warn('PlaySuper not initialized yet, cannot get balance');
+        return Promise.resolve();
+    }
+
+    console.log('Fetching player balance...');
+
+    return fetch(`${this.apiUrl}/coins/${this.coinId}/balance`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'omit',
+        headers: {
+            'accept': 'application/json',
+            'x-game-uuid': this.playerUUID,
+            'x-api-key': this.apiKey
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to get balance: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Assuming the API returns { balance: 123 }
+            this.playerBalance = data.balance || 0;
+            console.log('Player balance updated:', this.playerBalance);
+            return data;
+        })
+        .catch(error => {
+            console.error('Failed to get player balance:', error);
+            this.playerBalance = 0; // Default to 0 on error
+            throw error;
         });
 };
 
@@ -203,6 +244,9 @@ Mario.PlaySuperIntegration.prototype.awardWelcomeCoins = function () {
             .then(() => {
                 console.log(`✅ Successfully awarded ${welcomeAmount} welcome coins!`);
                 this.showWelcomeNotification(welcomeAmount);
+
+                // No need to call getPlayerBalance again if distributeCoins updates it
+                // If it doesn't, we would call it here.
 
                 // Clear the new user flag after successful welcome coin distribution
                 localStorage.removeItem('playsuper_new_user');
@@ -421,6 +465,14 @@ Mario.PlaySuperIntegration.prototype.distributeCoins = function (amount) {
         })
         .then(data => {
             console.log('Successfully distributed', amount, 'PlaySuper coins!');
+            // Assuming the API response contains the new balance, e.g., { newBalance: 123 }
+            if (data && typeof data.newBalance !== 'undefined') {
+                this.playerBalance = data.newBalance;
+                console.log('Player balance updated after distribution:', this.playerBalance);
+            } else {
+                // Fallback if the new balance isn't returned
+                this.playerBalance += amount;
+            }
             this.showRewardNotification(amount);
             return data;
         })
@@ -1005,6 +1057,64 @@ Mario.PlaySuperIntegration.prototype.navigateToMyRewards = function () {
     }, 800);
 };
 
+Mario.PlaySuperIntegration.prototype.openStoreToSpecificReward = function (orderId) {
+    if (!this.isInitialized) {
+        console.warn('PlaySuper not initialized yet');
+        return;
+    }
+
+    if (!this.playerToken) {
+        console.error('Player token not available. Cannot open store.');
+        return;
+    }
+
+    console.log('Opening PlaySuper store to specific reward:', orderId);
+
+    // Check if store is preloaded
+    const storeContainer = document.getElementById('playsuper-store-container');
+    if (!storeContainer || !this.storeIframe) {
+        console.warn('Store not preloaded, creating on demand for specific reward...');
+        this.preloadStore();
+        // Wait for preload to complete, then navigate
+        setTimeout(() => {
+            this.navigateToSpecificReward(orderId);
+        }, 1000);
+        return;
+    }
+
+    // Navigate the preloaded iframe to specific reward page
+    this.navigateToSpecificReward(orderId);
+
+    // Show the store
+    storeContainer.style.display = 'flex';
+    console.log('Navigated preloaded store to specific reward instantly!');
+};
+
+Mario.PlaySuperIntegration.prototype.navigateToSpecificReward = function (orderId) {
+    if (!this.storeIframe) {
+        console.error('Cannot navigate to specific reward - iframe not available');
+        return;
+    }
+
+    // Create URL for specific reward page
+    const rewardUrl = new URL(this.storeUrl);
+    rewardUrl.pathname = `/rewards/my-rewards/${orderId}`; // Navigate to specific order
+    rewardUrl.searchParams.set('apiKey', this.apiKey);
+    rewardUrl.searchParams.set('view', 'mobile');
+    rewardUrl.searchParams.set('embedded', 'true');
+
+    // Navigate to specific reward page
+    this.storeIframe.src = rewardUrl.toString();
+    console.log('Navigating store iframe to specific reward:', orderId);
+    console.log('Full URL:', rewardUrl.toString());
+
+    // Re-send auth token after navigation
+    setTimeout(() => {
+        this.sendAuthToken();
+        console.log('Auth token sent to specific reward page');
+    }, 800);
+};
+
 Mario.PlaySuperIntegration.prototype.closeStore = function () {
     const storeContainer = document.getElementById('playsuper-store-container');
     if (storeContainer) {
@@ -1014,64 +1124,29 @@ Mario.PlaySuperIntegration.prototype.closeStore = function () {
     console.log('Store closed');
 };
 
-// Timer-based coin distribution methods
+// Timer-based coin distribution methods - REMOVED FOR REAL-TIME
 Mario.PlaySuperIntegration.prototype.onLevelStart = function () {
-    this.pendingCoins = 0;
-    this.levelStartTime = Date.now();
-    console.log('Level started - resetting coin counter and starting 10-second timer');
-
-    // Clear any existing timer
-    this.stopCoinDistributionTimer();
-
-    // Start the 10-second distribution timer
-    this.startCoinDistributionTimer();
+    // This logic is no longer needed for real-time distribution
+    console.log('Level started - real-time coin distribution is active.');
 };
 
-Mario.PlaySuperIntegration.prototype.startCoinDistributionTimer = function () {
-    if (!this.isInitialized) {
-        return;
-    }
-
-    console.log('Starting coin distribution timer (every 10 seconds)');
-
-    this.coinDistributionTimer = setInterval(() => {
-        if (this.pendingCoins > 0) {
-            console.log(`⏰ 10 seconds elapsed! Distributing ${this.pendingCoins} pending coins...`);
-
-            const coinsToDistribute = this.pendingCoins;
-            this.pendingCoins = 0; // Reset counter before API call
-
-            this.distributeCoins(coinsToDistribute)
-                .then(() => {
-                    console.log(`✅ Successfully distributed ${coinsToDistribute} coins via timer`);
-                })
-                .catch((error) => {
-                    console.warn(`❌ Failed to distribute coins via timer, adding back to pending`);
-                    this.pendingCoins += coinsToDistribute; // Add back on failure
-                });
-        } else {
-            console.log('⏰ 10 seconds elapsed, but no coins to distribute');
-        }
-    }, this.distributionInterval);
-};
-
-Mario.PlaySuperIntegration.prototype.stopCoinDistributionTimer = function () {
-    if (this.coinDistributionTimer) {
-        clearInterval(this.coinDistributionTimer);
-        this.coinDistributionTimer = null;
-        console.log('Coin distribution timer stopped');
-    }
-};
+Mario.PlaySuperIntegration.prototype.startCoinDistributionTimer = function () { };
+Mario.PlaySuperIntegration.prototype.stopCoinDistributionTimer = function () { };
 
 Mario.PlaySuperIntegration.prototype.onCoinCollected = function (amount = 1) {
     if (!this.isInitialized) {
         return;
     }
 
-    this.pendingCoins += amount;
-    console.log(`Coin collected! Pending coins: ${this.pendingCoins}`);
+    console.log(`Coin collected! Distributing ${amount} coin(s) immediately.`);
 
-    // Optional: Show visual feedback without API call
+    // Distribute the coin immediately
+    this.distributeCoins(amount).catch(error => {
+        console.error("Failed to distribute coin in real-time:", error);
+        // Optional: handle retry logic here if needed
+    });
+
+    // Optional: Show visual feedback without waiting for API call
     this.showCoinCollectedFeedback(amount);
 };
 
@@ -1154,14 +1229,12 @@ Mario.PlaySuperIntegration.prototype.onLevelComplete = function () {
 
     console.log(`🏁 Level completed in ${levelDuration.toFixed(1)}s!`);
 
-    // Stop the timer
-    this.stopCoinDistributionTimer();
+    // Stop the timer - NO LONGER NEEDED
+    // this.stopCoinDistributionTimer();
 
-    // Calculate total coins: any remaining pending coins + level completion bonus
-    const remainingCoins = this.pendingCoins;
-    const totalCoins = remainingCoins + this.rewardsPerLevel;
+    // Level completion bonus
+    const totalCoins = this.rewardsPerLevel;
 
-    console.log(`Remaining coins from current timer cycle: ${remainingCoins}`);
     console.log(`Level completion bonus: ${this.rewardsPerLevel}`);
     console.log(`Total PlaySuper coins to award: ${totalCoins}`);
 
@@ -1170,8 +1243,6 @@ Mario.PlaySuperIntegration.prototype.onLevelComplete = function () {
         this.distributeCoins(totalCoins)
             .then(() => {
                 console.log('✅ Final level rewards distributed successfully');
-                // Reset everything after successful distribution
-                this.pendingCoins = 0;
                 this.levelStartTime = null;
 
                 // Show treasure chest after coin distribution
@@ -1181,7 +1252,6 @@ Mario.PlaySuperIntegration.prototype.onLevelComplete = function () {
             })
             .catch(() => {
                 console.warn('❌ Failed to distribute final level rewards');
-                // Keep the coins for potential retry
             });
     } else {
         // Even if no coins to distribute, show treasure chest
@@ -1192,22 +1262,8 @@ Mario.PlaySuperIntegration.prototype.onLevelComplete = function () {
 };
 
 Mario.PlaySuperIntegration.prototype.onLevelExit = function () {
-    console.log('🚪 Level exited - stopping coin distribution timer');
-
-    // Stop the timer when leaving level (death, exit, etc.)
-    this.stopCoinDistributionTimer();
-
-    // Optionally distribute any pending coins before exit
-    if (this.pendingCoins > 0) {
-        console.log(`Distributing ${this.pendingCoins} pending coins before level exit`);
-        const coinsToDistribute = this.pendingCoins;
-        this.pendingCoins = 0;
-
-        this.distributeCoins(coinsToDistribute)
-            .catch(() => {
-                this.pendingCoins += coinsToDistribute; // Add back on failure
-            });
-    }
+    console.log('🚪 Level exited');
+    // No timer to stop, no pending coins to distribute in real-time model.
 };
 
 // ============= TREASURE CHEST FEATURE =============

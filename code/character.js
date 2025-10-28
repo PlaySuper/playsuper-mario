@@ -540,7 +540,6 @@ Mario.Character.prototype.IsBlocking = function (x, y, xa, ya) {
 
     if (((Mario.Tile.Behaviors[block & 0xff]) & Mario.Tile.PickUpable) > 0) {
         this.GetCoin();
-        Enjine.Resources.PlaySound("coin");
         this.World.Level.SetBlock(x, y, 0);
         for (xx = 0; xx < 2; xx++) {
             for (yy = 0; yy < 2; yy++) {
@@ -718,6 +717,7 @@ Mario.Character.prototype.Get1Up = function () {
 
 Mario.Character.prototype.GetCoin = function () {
     this.Coins++;
+    Enjine.Resources.PlaySound("coin");
     if (this.Coins === 100) {
         this.Coins = 0;
         this.Get1Up();
