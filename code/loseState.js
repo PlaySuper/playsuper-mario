@@ -9,14 +9,17 @@ Mario.LoseState = function () {
     this.gameOver = null;
     this.font = null;
     this.wasKeyDown = false;
-    this.discountCheckDelay = 2.5; // Wait 2.5 seconds before checking for discounts
+    this.discountCheckDelay = 1.0; // Wait 1 second before checking for discounts (reduced for better UX)
     this.discountTimer = 0;
     this.discountOffered = false;
 };
 
 Mario.LoseState.prototype = new Enjine.GameState();
+Mario.LoseState.prototype.constructor = Mario.LoseState;
 
 Mario.LoseState.prototype.Enter = function () {
+    console.log('🎮 LoseState.Enter: Player has lost, entering lose state...');
+
     this.drawManager = new Enjine.DrawableManager();
     this.camera = new Enjine.Camera();
 
@@ -36,6 +39,11 @@ Mario.LoseState.prototype.Enter = function () {
     // Reset discount state
     this.discountTimer = 0;
     this.discountOffered = false;
+    console.log('🔄 LoseState.Enter: Reset discount timer and flags');
+    console.log('🔍 LoseState.Enter: Discount system check at entry:');
+    console.log('   - System exists:', typeof Mario.discountSystem !== 'undefined');
+    console.log('   - Is initialized:', Mario.discountSystem?.isInitialized);
+    console.log('   - Can generate:', Mario.discountSystem?.canGenerateDiscount());
 
     // Create buttons instead of keyboard prompts
     this.createLoseButtons();
@@ -65,9 +73,13 @@ Mario.LoseState.prototype.Update = function (delta) {
     // Handle discount system integration
     if (!this.discountOffered) {
         this.discountTimer += delta;
+        console.log('⏱️ LoseState.Update: discountTimer =', this.discountTimer.toFixed(2), '/ threshold =', this.discountCheckDelay);
         if (this.discountTimer >= this.discountCheckDelay) {
+            console.log('🚨 LoseState.Update: Timer threshold reached! Calling checkForDiscountOffer...');
             this.checkForDiscountOffer();
         }
+    } else {
+        console.log('⏭️ LoseState.Update: Discount already offered, skipping timer check');
     }
 
     // Button functionality replaced keyboard controls
@@ -75,6 +87,15 @@ Mario.LoseState.prototype.Update = function (delta) {
 
 Mario.LoseState.prototype.Draw = function (context) {
     this.drawManager.Draw(context, this.camera);
+
+    // Draw coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 10, 10);
+        } catch (error) {
+            console.log('LoseState: DrawCoinBalance failed:', error.message);
+        }
+    }
 };
 
 Mario.LoseState.prototype.CheckForChange = function (context) {
@@ -84,12 +105,19 @@ Mario.LoseState.prototype.CheckForChange = function (context) {
 Mario.LoseState.prototype.checkForDiscountOffer = function () {
     this.discountOffered = true;
 
+    console.log('=== DISCOUNT SYSTEM CHECK ===');
+    console.log('1. System exists:', typeof Mario.discountSystem !== 'undefined');
+    console.log('2. Is initialized:', Mario.discountSystem?.isInitialized);
+    console.log('3. Can generate discount:', Mario.discountSystem?.canGenerateDiscount());
+    console.log('4. Last discount time:', Mario.discountSystem?.lastDiscountTime);
+    console.log('5. Cooldown (ms):', Mario.discountSystem?.discountCooldown);
+
     // Check if discount system is available and can generate discount
     if (typeof Mario.discountSystem !== 'undefined' &&
         Mario.discountSystem.isInitialized &&
         Mario.discountSystem.canGenerateDiscount()) {
 
-        console.log('LoseState: Checking for recovery discount offer...');
+        console.log('LoseState: All checks passed - showing recovery discount offer...');
 
         // Add contextual message about possible discounts
         if (this.font.Strings.length < 3) {
@@ -98,10 +126,14 @@ Mario.LoseState.prototype.checkForDiscountOffer = function () {
 
         // Slight delay to build anticipation
         setTimeout(() => {
+            console.log('LoseState: Triggering onPlayerDeath...');
             Mario.discountSystem.onPlayerDeath();
-        }, 1000);
+        }, 500);
     } else {
         console.log('LoseState: No discount available or system not ready');
+        console.log('- System undefined:', typeof Mario.discountSystem === 'undefined');
+        console.log('- Not initialized:', !Mario.discountSystem?.isInitialized);
+        console.log('- Cannot generate:', !Mario.discountSystem?.canGenerateDiscount());
 
         // Show alternative message
         if (this.font.Strings.length < 3) {
@@ -111,43 +143,49 @@ Mario.LoseState.prototype.checkForDiscountOffer = function () {
 };
 
 Mario.LoseState.prototype.handleRetryWithDiscount = function () {
-    console.log('LoseState: Player wants to retry');
+    console.log('🔄 LoseState: Player wants to retry - resetting lives and restarting game...');
 
-    // If discount system is available, show a special retry offer
-    if (typeof Mario.discountSystem !== 'undefined' &&
-        Mario.discountSystem.isInitialized) {
-
-        // Show a quick retry discount if available
-        Mario.discountSystem.generateDiscountCode()
-            .then(discount => {
-                console.log('Retry discount available:', discount);
-                Mario.discountSystem.showDiscountModal(discount);
-            })
-            .catch(error => {
-                console.log('No retry discount available:', error);
-                // Just restart the level
-                this.restartLevel();
-            });
-    } else {
-        // No discount system, just restart
-        this.restartLevel();
+    // Reset lives to 3 for a fresh start
+    if (typeof Mario.MarioCharacter !== 'undefined') {
+        Mario.MarioCharacter.Lives = 3;
+        console.log('✨ Lives reset to 3 for new game attempt');
     }
+
+    // Reset the global map state for a fresh start
+    if (typeof Mario.GlobalMapState !== 'undefined') {
+        console.log('🗺️ Resetting map progress for new game...');
+        Mario.GlobalMapState.currentLevelIndex = 0;
+        Mario.GlobalMapState.completedLevels = [];
+        Mario.GlobalMapState.WorldNumber = 1;
+    }
+
+    // Go back to map state to start fresh
+    this.goToMap();
 };
 
-Mario.LoseState.prototype.restartLevel = function () {
-    console.log('LoseState: Restarting level...');
+Mario.LoseState.prototype.goToMap = function () {
+    console.log('🗺️ Going to map state...');
 
-    // Reset Mario's state and restart the level
+    // Play button sound
+    if (typeof Enjine !== 'undefined' && Enjine.Resources) {
+        Enjine.Resources.PlaySound("coin");
+    }
+
+    // Reset Mario's death/win states
     if (typeof Mario.MarioCharacter !== 'undefined') {
         Mario.MarioCharacter.DeathTime = 0;
         Mario.MarioCharacter.WinTime = 0;
+        Mario.MarioCharacter.DeathDiscountTriggered = false;
     }
 
-    // Transition to level state (this might need adjustment based on level system)
-    if (typeof Mario.LevelState !== 'undefined') {
-        var app = Enjine.Application.Instance;
-        if (app && app.stateContext) {
-            app.stateContext.ChangeState(new Mario.LevelState());
+    // Go to the global map state
+    if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
+        if (Mario.GlobalMapState) {
+            Enjine.Application.Instance.stateContext.ChangeState(Mario.GlobalMapState);
+        } else {
+            // Create new map state if it doesn't exist
+            Mario.GlobalMapState = new Mario.MapState();
+            Enjine.Application.Instance.stateContext.ChangeState(Mario.GlobalMapState);
         }
     }
 };
@@ -197,9 +235,9 @@ Mario.LoseState.prototype.createLoseButtons = function () {
     `;
     continueButton.onclick = () => this.goToTitle();
 
-    // Retry Button
-    const retryButton = this.createLoseButton('🔄 RETRY LEVEL', 'retry-btn');
-    retryButton.style.cssText += `
+    // New Game Button (retry with fresh lives)
+    const newGameButton = this.createLoseButton('🎮 NEW GAME', 'newgame-btn');
+    newGameButton.style.cssText += `
         position: absolute;
         left: 50%;
         top: 85%;
@@ -210,11 +248,11 @@ Mario.LoseState.prototype.createLoseButtons = function () {
         font-size: 12px;
         padding: 10px 20px;
     `;
-    retryButton.onclick = () => this.handleRetryWithDiscount();
+    newGameButton.onclick = () => this.handleRetryWithDiscount();
 
     // Add buttons to container
     buttonContainer.appendChild(continueButton);
-    buttonContainer.appendChild(retryButton);
+    buttonContainer.appendChild(newGameButton);
 
     // Add container to document
     document.body.appendChild(buttonContainer);
@@ -283,15 +321,24 @@ Mario.LoseState.prototype.removeLoseButtons = function () {
 // ============= BUTTON ACTION HANDLERS =============
 
 Mario.LoseState.prototype.goToTitle = function () {
-    console.log('Continue button clicked - going to title screen...');
+    console.log('🏠 Continue button clicked - going to title screen...');
 
     // Play button sound
     if (typeof Enjine !== 'undefined' && Enjine.Resources) {
         Enjine.Resources.PlaySound("pipe");
     }
 
+    // Reset Mario character completely for fresh start from title
+    if (typeof Mario.MarioCharacter !== 'undefined') {
+        Mario.MarioCharacter.Lives = 3;
+        Mario.MarioCharacter.DeathTime = 0;
+        Mario.MarioCharacter.WinTime = 0;
+        Mario.MarioCharacter.DeathDiscountTriggered = false;
+        console.log('✨ Mario character reset for title screen');
+    }
+
     // Get the current context from the Application instance
     if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
-        Enjine.Application.Instance.ChangeState(new Mario.TitleState());
+        Enjine.Application.Instance.stateContext.ChangeState(new Mario.TitleState());
     }
 };

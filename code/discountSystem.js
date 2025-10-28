@@ -11,20 +11,21 @@ Mario.DiscountSystem = function () {
     this.playerUUID = null;
     this.isInitialized = false;
     this.lastDiscountTime = null;
-    this.discountCooldown = 30 * 1000; // 30 seconds cooldown for better testing experience
+    this.discountCooldown = 10 * 1000; // 10 seconds cooldown for testing (was 30)
 };
 
 Mario.DiscountSystem.prototype.init = function () {
-    console.log('Initializing PlaySuper Discount System...');
+    console.log('🎯 Initializing PlaySuper Discount System...');
 
     if (!Mario.playSuperConfig) {
-        console.error('PlaySuper configuration not found');
+        console.error('❌ PlaySuper configuration not found');
         return;
     }
 
     const config = Mario.playSuperConfig.getConfig();
     if (!config) {
-        console.warn('PlaySuper configuration not valid');
+        console.warn('⚠️ PlaySuper configuration not valid - credentials likely not set');
+        console.log('   To enable scratch cards, you need to set API credentials');
         return;
     }
 
@@ -34,7 +35,10 @@ Mario.DiscountSystem.prototype.init = function () {
     this.playerUUID = Mario.playSuperIntegration.playerUUID;
     this.isInitialized = true;
 
-    console.log('Discount system initialized successfully');
+    console.log('✅ Discount system initialized successfully!');
+    console.log('   - API URL:', this.apiUrl);
+    console.log('   - Coin ID:', this.coinId);
+    console.log('   - Player UUID:', this.playerUUID ? 'Set' : 'Not set');
 };
 
 Mario.DiscountSystem.prototype.canGenerateDiscount = function () {
@@ -46,44 +50,49 @@ Mario.DiscountSystem.prototype.canGenerateDiscount = function () {
 
 Mario.DiscountSystem.prototype.onPlayerDeath = function () {
     // Comprehensive check to prevent showing death cards on level completion
-    console.log('DiscountSystem: onPlayerDeath called - checking state...');
+    console.log('=== DISCOUNT SYSTEM: onPlayerDeath CALLED ===');
+    console.log('- Mario.MarioCharacter exists:', !!Mario.MarioCharacter);
     console.log('- Mario.MarioCharacter.WinTime:', Mario.MarioCharacter ? Mario.MarioCharacter.WinTime : 'undefined');
     console.log('- Mario.MarioCharacter.DeathTime:', Mario.MarioCharacter ? Mario.MarioCharacter.DeathTime : 'undefined');
     console.log('- Mario.MarioCharacter.DeathDiscountTriggered:', Mario.MarioCharacter ? Mario.MarioCharacter.DeathDiscountTriggered : 'undefined');
     console.log('- Can generate discount:', this.canGenerateDiscount());
     console.log('- Is initialized:', this.isInitialized);
+    console.log('- Last discount time:', this.lastDiscountTime);
+    console.log('- Time since last discount:', this.lastDiscountTime ? (Date.now() - this.lastDiscountTime) / 1000 + 's' : 'never');
 
     // Don't show death card if player is winning!
     if (Mario.MarioCharacter && Mario.MarioCharacter.WinTime > 0) {
-        console.log('DiscountSystem: Player is winning, skipping death discount');
+        console.log('❌ DiscountSystem: Player is winning, skipping death discount');
         return;
     }
 
     // Check if discount already triggered for this death
     if (Mario.MarioCharacter && Mario.MarioCharacter.DeathDiscountTriggered) {
-        console.log('DiscountSystem: Death discount already triggered, skipping');
+        console.log('❌ DiscountSystem: Death discount already triggered, skipping');
         return;
     }
 
     // Extra check - don't show if player hasn't actually died
     if (Mario.MarioCharacter && Mario.MarioCharacter.DeathTime === 0) {
-        console.log('DiscountSystem: Player has not actually died (DeathTime=0), skipping');
+        console.log('❌ DiscountSystem: Player has not actually died (DeathTime=0), skipping');
         return;
     }
 
     // Check cooldown
     if (!this.canGenerateDiscount()) {
-        console.log('DiscountSystem: Still in cooldown period, skipping');
+        console.log('❌ DiscountSystem: Still in cooldown period, skipping');
+        const timeLeft = Math.ceil((this.discountCooldown - (Date.now() - this.lastDiscountTime)) / 1000);
+        console.log('   Cooldown remaining:', timeLeft + 's');
         return;
     }
 
-    console.log('DiscountSystem: All checks passed! Showing Mario-themed scratch card...');
+    console.log('✅ DiscountSystem: All checks passed! Showing Mario-themed scratch card...');
 
     // Show immediate Mario-themed encouragement with scratch card
     this.showMarioScratchCard()
         .then(reward => {
             if (reward) {
-                console.log('Successfully generated reward from scratch card:', reward);
+                console.log('✅ Successfully generated reward from scratch card:', reward);
                 // Mark as triggered after successful scratch card interaction
                 if (Mario.MarioCharacter) {
                     Mario.MarioCharacter.DeathDiscountTriggered = true;
@@ -93,7 +102,7 @@ Mario.DiscountSystem.prototype.onPlayerDeath = function () {
             }
         })
         .catch(error => {
-            console.log('Failed to show scratch card or user skipped:', error);
+            console.log('⚠️ Failed to show scratch card or user skipped:', error);
             // Even if failed/skipped, mark as triggered to prevent multiple attempts
             if (Mario.MarioCharacter) {
                 Mario.MarioCharacter.DeathDiscountTriggered = true;
@@ -629,258 +638,255 @@ Mario.DiscountSystem.prototype.showGenericEncouragement = function () {
 };
 
 Mario.DiscountSystem.prototype.showMarioScratchCard = function () {
-    console.log('Showing Mario-themed scratch card for death recovery...');
+    console.log('Showing Mario-themed reward card (no scratching required)...');
 
     return new Promise((resolve, reject) => {
-        // Create Mario-themed scratch card overlay
-        const overlay = document.createElement('div');
-        overlay.id = 'mario-scratch-overlay';
-        overlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(180deg, #5C94FC 0%, #5C94FC 50%, #00AA00 50%, #00AA00 100%);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Press Start 2P', 'Courier New', monospace;
-            animation: fadeIn 0.5s ease-in;
-        `;
-
-        // Create scratch card container
-        const cardContainer = document.createElement('div');
-        cardContainer.style.cssText = `
-            background: #FFD700;
-            border: 8px solid #B8860B;
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            text-align: center;
-            color: #8B4513;
-            position: relative;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-            animation: bounceIn 0.6s ease-out;
-        `;
-
-        cardContainer.innerHTML = `
-            <div style="font-size: 14px; margin-bottom: 20px; color: #DC143C; font-weight: bold;">
-                💥 GAME OVER! 💥
-            </div>
-            <div style="font-size: 40px; margin-bottom: 15px;">MARIO</div>
-            <div style="font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
-                <div style="color: #228B22; margin-bottom: 10px;">Don't worry if you died!</div>
-                <div style="color: #8B4513;">Here's a real reward scratch card!</div>
-            </div>
-            
-            <div id="scratch-area" style="
-                background: #C0C0C0;
-                border: 4px solid #808080;
-                border-radius: 12px;
-                padding: 40px 20px;
-                margin: 20px 0;
-                position: relative;
-                cursor: pointer;
-                transition: all 0.3s;
-                background-image: repeating-linear-gradient(45deg, #C0C0C0 0px, #C0C0C0 10px, #A9A9A9 10px, #A9A9A9 20px);
-            ">
-                <div style="font-size: 10px; color: #666; margin-bottom: 10px;">SCRATCH TO REVEAL</div>
-                <div style="font-size: 20px; color: #333;">🪙 ? ? ? 🪙</div>
-                <div id="hidden-reward" style="display: none; font-size: 16px; color: #DC143C; margin-top: 10px;">
-                    <div>DISCOUNT COUPON REWARD!</div>
-                    <div id="reward-details" style="font-size: 10px; margin-top: 5px; color: #8B4513;"></div>
-                </div>
-            </div>
-            
-            <div style="font-size: 8px; margin-bottom: 20px; color: #666; opacity: 0.8;">
-                Click the scratch area to reveal your real reward!
-            </div>
-            
-            <div style="margin-top: 20px;">
-                <button id="mario-scratch-claim" style="
-                    background: #FF6B6B;
-                    border: 3px solid #E74C3C;
-                    color: white;
-                    padding: 12px 24px;
-                    font-size: 10px;
-                    font-family: inherit;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    margin-right: 10px;
-                    display: none;
-                    transition: all 0.2s;
-                " disabled>Claim Reward</button>
-                <button id="mario-scratch-skip" style="
-                    background: transparent;
-                    border: 3px solid #8B4513;
-                    color: #8B4513;
-                    padding: 12px 24px;
-                    font-size: 10px;
-                    font-family: inherit;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                ">Skip</button>
-            </div>
-        `;
-
-        // Add animations
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes bounceIn {
-                0% { opacity: 0; transform: scale(0.3); }
-                50% { transform: scale(1.05); }
-                70% { transform: scale(0.9); }
-                100% { opacity: 1; transform: scale(1); }
-            }
-            @keyframes scratchReveal {
-                0% { background: #C0C0C0; }
-                50% { background: #E6E6FA; }
-                100% { background: #F0F8FF; }
-            }
-            #mario-scratch-claim:hover:not(:disabled) {
-                background: #E74C3C !important;
-                transform: scale(1.05);
-            }
-            #mario-scratch-skip:hover {
-                background: rgba(139, 69, 19, 0.1) !important;
-                transform: scale(1.05);
-            }
-            #scratch-area:hover {
-                transform: scale(1.02);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            }
-        `;
-        document.head.appendChild(style);
-
-        overlay.appendChild(cardContainer);
-        document.body.appendChild(overlay);
-
-        let isScratched = false;
-
-        // Scratch area interaction
-        const scratchArea = document.getElementById('scratch-area');
-        const hiddenReward = document.getElementById('hidden-reward');
-        const rewardDetails = document.getElementById('reward-details');
-        const claimButton = document.getElementById('mario-scratch-claim');
-        const skipButton = document.getElementById('mario-scratch-skip');
-
-        scratchArea.onclick = () => {
-            if (isScratched) return;
-
-            isScratched = true;
-
-            // Animate the scratch reveal
-            scratchArea.style.animation = 'scratchReveal 1s ease-out';
-            scratchArea.style.background = '#F0F8FF';
-            scratchArea.style.borderColor = '#4169E1';
-
-            setTimeout(() => {
-                hiddenReward.style.display = 'block';
-                hiddenReward.style.animation = 'bounceIn 0.5s ease-out';
-
-                // Use PlaySuper API Helper to fetch real non-gift card rewards
-                console.log('Fetching real reward from PlaySuper API Helper...');
-
-                if (!Mario.playSuperAPIHelper || !Mario.playSuperAPIHelper.isInitialized) {
-                    console.log('Initializing PlaySuper API Helper...');
-                    Mario.playSuperAPIHelper.init();
+        // Fetch rewards first to display them directly
+        this.fetchScratchCardRewards()
+            .then(rewards => {
+                if (!rewards || rewards.length === 0) {
+                    console.log('No rewards available');
+                    reject(new Error('No rewards available'));
+                    return;
                 }
 
-                // Fetch rewards with giftCard: false and unique game UUID for scratch cards
-                this.fetchScratchCardRewards()
-                    .then(rewards => {
-                        console.log('Fetched rewards for scratch card:', rewards.length);
+                const selectedReward = rewards[0];
+                console.log('Selected reward to display:', selectedReward);
 
-                        if (rewards && rewards.length > 0) {
-                            // Take the first reward as requested
-                            const selectedReward = rewards[0];
-                            console.log('Selected reward for scratch card:', selectedReward);
+                // Create Mario-themed reward overlay
+                const overlay = document.createElement('div');
+                overlay.id = 'mario-reward-overlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(180deg, #5C94FC 0%, #5C94FC 50%, #00AA00 50%, #00AA00 100%);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-family: 'Press Start 2P', 'Courier New', monospace;
+                    animation: fadeIn 0.5s ease-in;
+                `;
 
-                            // Update the UI with the real reward details
-                            rewardDetails.innerHTML = `
-                            <div style="margin-bottom: 5px;">${selectedReward.name || 'Mystery Reward'}</div>
-                            <div style="font-size: 8px; opacity: 0.8;">${selectedReward.description || 'Special reward for your gaming spirit!'}</div>
-                        `;
+                // Create reward card container
+                const cardContainer = document.createElement('div');
+                cardContainer.style.cssText = `
+                    background: #FFD700;
+                    border: 8px solid #B8860B;
+                    border-radius: 20px;
+                    padding: 30px;
+                    max-width: 500px;
+                    width: 90%;
+                    text-align: center;
+                    color: #8B4513;
+                    position: relative;
+                    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+                    animation: bounceIn 0.6s ease-out;
+                `;
 
-                            claimButton.style.display = 'inline-block';
-                            claimButton.disabled = false;
-                            claimButton.style.animation = 'bounceIn 0.5s ease-out 0.2s both';
+                cardContainer.innerHTML = `
+                    <div style="font-size: 14px; margin-bottom: 20px; color: #DC143C; font-weight: bold;">
+                        🎉 REWARD UNLOCKED! 🎉
+                    </div>
+                    <div style="font-size: 40px; margin-bottom: 15px;">MARIO</div>
+                    <div style="font-size: 12px; margin-bottom: 20px; line-height: 1.4;">
+                        <div style="color: #228B22; margin-bottom: 10px;">Don't worry if you died!</div>
+                        <div style="color: #8B4513;">Here's your reward!</div>
+                    </div>
+                    
+                    <div id="reward-display" style="
+                        background: #FFFFFF;
+                        border: 4px solid #4169E1;
+                        border-radius: 12px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        position: relative;
+                        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+                    ">
+                        <div id="brand-logo" style="margin-bottom: 15px;"></div>
+                        <div id="offer-name" style="font-size: 14px; color: #DC143C; margin-bottom: 10px; font-weight: bold;">
+                            ${selectedReward.name || 'Mystery Reward'}
+                        </div>
+                        <div id="offer-description" style="font-size: 10px; color: #8B4513; line-height: 1.3;">
+                            ${selectedReward.description || 'Special reward for your gaming spirit!'}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 25px; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <button id="mario-reward-claim" style="
+                            background: linear-gradient(180deg, #FF6B6B 0%, #E74C3C 100%);
+                            border: 3px solid #C0392B;
+                            color: white;
+                            padding: 12px 20px;
+                            font-size: 10px;
+                            font-family: inherit;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+                        ">🛒 OPEN STORE</button>
+                        <button id="mario-reward-close" style="
+                            background: transparent;
+                            border: 3px solid #8B4513;
+                            color: #8B4513;
+                            padding: 12px 20px;
+                            font-size: 10px;
+                            font-family: inherit;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        ">✖️ CLOSE</button>
+                    </div>
+                `;
 
-                            // Set up claim button to purchase the first reward
-                            claimButton.onclick = () => {
-                                console.log('🛒 Claiming reward:', selectedReward.id);
+                // Add animations
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes bounceIn {
+                        0% { opacity: 0; transform: scale(0.3); }
+                        50% { transform: scale(1.05); }
+                        70% { transform: scale(0.9); }
+                        100% { opacity: 1; transform: scale(1); }
+                    }
+                    @keyframes fadeIn {
+                        0% { opacity: 0; }
+                        100% { opacity: 1; }
+                    }
+                    #mario-reward-claim:hover {
+                        transform: scale(1.05);
+                        background: linear-gradient(180deg, #E74C3C 0%, #C0392B 100%);
+                    }
+                    #mario-reward-close:hover {
+                        background: rgba(139, 69, 19, 0.1) !important;
+                        transform: scale(1.05);
+                    }
+                `;
+                document.head.appendChild(style);
 
-                                // Purchase the reward using PlaySuper API Helper
-                                Mario.playSuperAPIHelper.purchaseReward(selectedReward.id)
-                                    .then(purchaseResult => {
-                                        console.log('Successfully purchased reward via scratch card:', purchaseResult);
-                                        this.removeScratchCard(overlay);
-                                        resolve({
-                                            reward: selectedReward,
-                                            purchase: purchaseResult,
-                                            type: 'scratch_card_reward'
-                                        });
-                                    })
-                                    .catch(purchaseError => {
-                                        console.error('Failed to purchase reward:', purchaseError);
-                                        this.removeScratchCard(overlay);
-                                        // Still resolve with the reward info even if purchase fails
-                                        resolve({
-                                            reward: selectedReward,
-                                            error: purchaseError,
-                                            type: 'scratch_card_reward_failed'
-                                        });
-                                    });
-                            };
-                        } else {
-                            throw new Error('No rewards available');
-                        }
-                    })
-                    .catch(error => {
-                        console.warn('Failed to fetch real rewards, showing fallback:', error);
+                overlay.appendChild(cardContainer);
+                document.body.appendChild(overlay);
 
-                        // Fallback to generic reward
-                        rewardDetails.innerHTML = `
-                        <div style="margin-bottom: 5px;">Consolation Prize!</div>
-                        <div style="font-size: 8px; opacity: 0.8;">Better luck next time, Mario!</div>
+                // Display brand logo if available
+                const logoContainer = document.getElementById('brand-logo');
+                if (selectedReward.brandLogo) {
+                    logoContainer.innerHTML = `
+                        <img src="${selectedReward.brandLogo}" 
+                             alt="Brand Logo" 
+                             style="max-width: 80px; max-height: 40px; object-fit: contain;"
+                             onerror="this.style.display='none'">
                     `;
+                } else if (selectedReward.brand) {
+                    logoContainer.innerHTML = `
+                        <div style="font-size: 12px; color: #4169E1; font-weight: bold;">
+                            ${selectedReward.brand}
+                        </div>
+                    `;
+                }
 
-                        claimButton.style.display = 'inline-block';
-                        claimButton.disabled = false;
-                        claimButton.style.animation = 'bounceIn 0.5s ease-out 0.2s both';
+                const claimButton = document.getElementById('mario-reward-claim');
+                const closeButton = document.getElementById('mario-reward-close');
 
-                        const fallbackReward = {
-                            name: 'Keep Playing!',
-                            description: 'Your courage is your reward!',
-                            type: 'encouragement'
-                        };
+                // Set up claim button to purchase reward and open store
+                claimButton.onclick = () => {
+                    console.log('🛒 Claiming reward and opening store:', selectedReward.id);
+                    claimButton.disabled = true;
+                    claimButton.innerHTML = '⏳ PURCHASING...';
 
-                        claimButton.onclick = () => {
+                    Mario.playSuperAPIHelper.purchaseReward(selectedReward.id)
+                        .then(purchaseResult => {
+                            console.log('✅ Successfully purchased reward:', purchaseResult);
+                            console.log('📦 Purchase result structure:', JSON.stringify(purchaseResult, null, 2));
+
+                            // Extract orderId from various possible response structures
+                            let orderId = null;
+                            if (purchaseResult.data?.orderId) {
+                                orderId = purchaseResult.data.orderId;
+                            } else if (purchaseResult.orderId) {
+                                orderId = purchaseResult.orderId;
+                            } else if (purchaseResult.id) {
+                                orderId = purchaseResult.id;
+                            } else if (purchaseResult.order_id) {
+                                orderId = purchaseResult.order_id;
+                            } else if (purchaseResult.data?.id) {
+                                orderId = purchaseResult.data.id;
+                            }
+
+                            console.log('🆔 Extracted Order ID:', orderId);
+
+                            if (!orderId) {
+                                console.error('❌ No orderId found in purchase result!');
+                                console.error('Purchase result keys:', Object.keys(purchaseResult));
+                                throw new Error('Order ID not found in purchase response');
+                            }
+
+                            console.log('🏪 Opening store iframe to specific reward...');
+
+                            // Open store iframe to the specific reward (no window.open needed!)
+                            let storeUrl; // Define storeUrl before using it
+                            if (typeof Mario.playSuperIntegration !== 'undefined') {
+                                Mario.playSuperIntegration.openStoreToSpecificReward(orderId);
+                                console.log('✅ Store iframe opened to reward:', orderId);
+                                const config = Mario.playSuperConfig.getConfig();
+                                storeUrl = `${config.storeUrl}/rewards/my-rewards/${orderId}`;
+                            } else {
+                                console.error('❌ PlaySuper integration not available');
+                                // Fallback to window.open if integration not available
+                                const config = Mario.playSuperConfig.getConfig();
+                                storeUrl = `${config.storeUrl}/rewards/my-rewards/${orderId}`;
+                                window.open(storeUrl, '_blank');
+                            }
+
+                            // Close scratch card and resolve
                             this.removeScratchCard(overlay);
-                            resolve(fallbackReward);
-                        };
+                            resolve({
+                                reward: selectedReward,
+                                purchase: purchaseResult,
+                                orderId: orderId,
+                                storeUrl: storeUrl,
+                                type: 'direct_reward_claim'
+                            });
+                        })
+                        .catch(purchaseError => {
+                            console.error('❌ Failed to purchase reward:', purchaseError);
+                            claimButton.disabled = false;
+                            claimButton.innerHTML = '🛒 OPEN STORE';
+                            alert('Failed to claim reward. Please try again later.');
+                        });
+                };
+
+                // Set up close button
+                closeButton.onclick = () => {
+                    console.log('User closed reward without claiming');
+                    this.removeScratchCard(overlay);
+                    resolve({
+                        reward: selectedReward,
+                        action: 'closed',
+                        type: 'reward_closed'
                     });
-            }, 1000);
-        };
+                };
 
-        skipButton.onclick = () => {
-            this.removeScratchCard(overlay);
-            reject(new Error('User skipped scratch card'));
-        };
+                // ESC key to close
+                const escHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        this.removeScratchCard(overlay);
+                        resolve({
+                            reward: selectedReward,
+                            action: 'escaped',
+                            type: 'reward_escaped'
+                        });
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                };
+                document.addEventListener('keydown', escHandler);
 
-        // Close on ESC key
-        const escHandler = (e) => {
-            if (e.key === 'Escape') {
-                this.removeScratchCard(overlay);
-                reject(new Error('User escaped scratch card'));
-                document.removeEventListener('keydown', escHandler);
-            }
-        };
-        document.addEventListener('keydown', escHandler);
+            })
+            .catch(error => {
+                console.error('Failed to fetch rewards:', error);
+                reject(error);
+            });
     });
 };
 

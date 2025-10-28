@@ -5,7 +5,7 @@
 		<link rel="icon" type="image/png" href="images/ps-logo.png">
 		<link rel="shortcut icon" type="image/png" href="images/ps-logo.png">
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -59,12 +59,114 @@
             .game-container {
                 position: relative;
                 display: flex;
-                flex-direction: row; /* Align canvas and sidebars */
+                flex-direction: row;
                 align-items: center;
                 justify-content: center;
                 width: 100vw;
                 height: 100vh;
-                background: url('images/background.png') repeat; /* Themed background */
+                background: linear-gradient(135deg, #8B4513 0%, #A0522D 25%, #D2691E 50%, #A0522D 75%, #8B4513 100%);
+            }
+            
+            /* Desktop Mario-themed Arcade Box - Matching Setup Screen Aesthetic */
+            @media (min-width: 769px) {
+                .game-container {
+                    padding: 40px;
+                    background: linear-gradient(135deg, #5C94FC 0%, #5C94FC 60%, #00AA00 60%, #00AA00 100%);
+                }
+                
+                .wooden-arcade-box {
+                    position: relative;
+                    background: linear-gradient(145deg, #8B4513 0%, #A0522D 50%, #8B4513 100%);
+                    border: 8px solid #654321;
+                    border-radius: 20px;
+                    padding: 25px;
+                    box-shadow: 
+                        inset 0 2px 0 #D2691E,
+                        inset 0 -2px 0 #5D4037,
+                        0 8px 16px rgba(0,0,0,0.3);
+                    max-width: 750px;
+                    max-height: 600px;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .wooden-arcade-box::before {
+                    content: 'SUPER MARIO HTML5';
+                    position: absolute;
+                    top: -45px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: transparent;
+                    color: #FFD700;
+                    padding: 10px 20px;
+                    font-family: 'Press Start 2P', monospace;
+                    font-size: 16px;
+                    font-weight: bold;
+                    text-shadow: 2px 2px 0px #8B4513;
+                    white-space: nowrap;
+                    z-index: 5;
+                }
+                
+                .wooden-arcade-box::after {
+                    content: '';
+                    position: absolute;
+                    top: 8px;
+                    left: 8px;
+                    right: 8px;
+                    bottom: 8px;
+                    background: 
+                        repeating-linear-gradient(
+                            0deg,
+                            transparent,
+                            transparent 2px,
+                            rgba(0,0,0,0.1) 2px,
+                            rgba(0,0,0,0.1) 3px
+                        ),
+                        repeating-linear-gradient(
+                            90deg,
+                            transparent,
+                            transparent 2px,
+                            rgba(255,255,255,0.05) 2px,
+                            rgba(255,255,255,0.05) 3px
+                        );
+                    border-radius: 12px;
+                    pointer-events: none;
+                }
+                
+                .arcade-screen-bezel {
+                    background: linear-gradient(145deg, #2C2C2C 0%, #1A1A1A 50%, #000000 100%);
+                    border: 6px solid #333333;
+                    border-radius: 12px;
+                    padding: 15px;
+                    box-shadow: 
+                        inset 0 0 15px rgba(0,0,0,0.8),
+                        inset 0 2px 0 #444444,
+                        inset 0 -2px 0 #000000;
+                    position: relative;
+                }
+                
+                .arcade-screen-bezel::before {
+                    content: '';
+                    position: absolute;
+                    top: -3px;
+                    left: -3px;
+                    right: -3px;
+                    bottom: -3px;
+                    background: linear-gradient(45deg, #555555, #333333);
+                    border-radius: 15px;
+                    z-index: -1;
+                }
+                
+                .game-container #canvas {
+                    position: relative;
+                    z-index: 10;
+                }
+
+                .mobile-controls, .mobile-gameboy-layout, #mobile-title-controls {
+                    display: none !important;
+                }
             }
             
             #canvas {
@@ -78,27 +180,259 @@
                 image-rendering: crisp-edges;
             }
             
-            .sidebar {
-                flex: 1;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                padding: 20px;
+            /* Desktop canvas styling - Clean and professional */
+            @media (min-width: 769px) {
+                #canvas {
+                    height: auto;
+                    width: 640px;
+                    max-height: 480px;
+                    border-radius: 8px;
+                    box-shadow: 
+                        0 0 20px rgba(0,0,0,0.5),
+                        inset 0 0 3px rgba(255,255,255,0.1);
+                    border: 2px solid #000000;
+                    background: #000000;
+                }
             }
-
-            /* Responsive canvas */
+            
+            /* Mobile Canvas - Full Screen Game */
             @media (max-width: 768px) {
-                /* Previous styles for canvas responsiveness are no longer needed with the new approach */
+                /* Hide desktop wooden box elements */
+                .wooden-arcade-box {
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: #000000 !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    padding: 0 !important;
+                    box-shadow: none !important;
+                    max-width: none !important;
+                    max-height: none !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    z-index: 1 !important;
+                }
                 
-                .game-header h1 {
-                    font-size: 2em;
+                .wooden-arcade-box::before,
+                .wooden-arcade-box::after {
+                    display: none !important;
+                }
+                
+                .arcade-screen-bezel {
+                    background: none !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    padding: 0 !important;
+                    box-shadow: none !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    position: relative !important;
+                }
+                
+                .arcade-screen-bezel::before {
+                    display: none !important;
                 }
                 
                 .game-container {
-                    margin: 10px;
-                    padding: 15px;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    padding: 0 !important;
+                    background: #000000 !important;
+                    display: block !important;
+                    z-index: 1 !important;
+                }
+                
+                #canvas {
+                    position: absolute !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    width: auto !important;
+                    height: auto !important;
+                    max-width: 100vw !important;
+                    max-height: 100vh !important;
+                    border: none !important;
+                    border-radius: 0 !important;
+                    box-shadow: none !important;
+                    object-fit: contain !important;
+                    z-index: 1 !important;
+                    background: #000000 !important;
+                    
+                    /* Scale to fit screen while maintaining aspect ratio */
+                    width: 100vw !important;
+                    height: calc(100vw * 0.75) !important; /* 4:3 aspect ratio */
+                }
+                
+                /* Adjust for screens taller than 4:3 ratio */
+                @media (max-width: 768px) and (max-height: 600px) {
+                    #canvas {
+                        width: calc(100vh * 1.33) !important; /* 4:3 aspect ratio */
+                        height: 100vh !important;
+                    }
+                }
+                
+                /* Portrait mode - position in top half of screen */
+                @media (max-width: 768px) and (orientation: portrait) {
+                    #canvas {
+                        top: 25% !important; /* Position in upper portion */
+                        transform: translate(-50%, -50%) !important;
+                        width: 95vw !important;
+                        height: calc(95vw * 0.75) !important;
+                        max-height: 60vh !important; /* Leave space for controls */
+                    }
+                }
+                
+                /* Landscape mode - fit to height with side margins */
+                @media (max-width: 768px) and (orientation: landscape) {
+                    #canvas {
+                        top: 50% !important;
+                        transform: translate(-50%, -50%) !important;
+                        width: calc(95vh * 1.33) !important;
+                        height: 95vh !important;
+                        max-width: 85vw !important; /* Leave space for controls */
+                    }
+                }
+            }
+            
+            /* Mobile Layout - Full Screen Game */
+            @media (max-width: 768px) {
+                html, body {
+                    overflow: hidden;
+                    margin: 0;
+                    padding: 0;
+                    background: #000000;
+                    width: 100%;
+                    height: 100%;
+                    position: fixed;
+                }
+
+                .game-header {
+                    display: none; /* Hide header on mobile to save space */
+                }
+
+                /* Ensure PlaySuper store button is properly positioned on mobile */
+                #playsuper-ui {
+                    position: fixed !important;
+                    top: 10px !important;
+                    right: 10px !important;
+                    z-index: 1002 !important;
+                }
+
+                #playsuper-ui button {
+                    font-size: 8px !important;
+                    padding: 6px 12px !important;
+                    background: rgba(255, 215, 0, 0.9) !important;
+                }
+                
+                /* Mobile controls positioned in bottom area for portrait mode */
+                .mobile-controls {
+                    position: fixed !important;
+                    bottom: 15px !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    width: 100vw !important;
+                    height: auto !important;
+                    z-index: 1001 !important;
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: flex-end !important;
+                    padding: 0 20px !important;
+                    pointer-events: none !important; /* Allow canvas interaction */
+                }
+                
+                /* Portrait mode - position controls in bottom 40% of screen */
+                @media (max-width: 768px) and (orientation: portrait) {
+                    .mobile-controls {
+                        bottom: 8vh !important;
+                        height: 30vh !important;
+                        align-items: center !important;
+                    }
+                }
+                
+                /* Style the control buttons to match Mario aesthetic */
+                .mobile-controls .d-pad,
+                .mobile-controls .actions {
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .mobile-controls .d-pad {
+                    flex-wrap: wrap;
+                    width: 120px;
+                    justify-content: center;
+                }
+
+                .mobile-controls .actions {
+                    flex-direction: column-reverse;
+                }
+                
+                .mobile-controls .d-pad button,
+                .mobile-controls .actions button {
+                    background: linear-gradient(180deg, #5C94FC 0%, #4682B4 100%);
+                    color: white !important;
+                    border: 3px solid #191970;
+                    border-radius: 12px;
+                    width: 55px !important;
+                    height: 55px !important;
+                    font-size: 24px !important;
+                    font-weight: bold !important;
+                    margin: 0 !important;
+                    box-shadow: 
+                        inset 0 2px 0 #87CEEB, 
+                        inset 0 -2px 0 #191970,
+                        0 4px 8px rgba(0,0,0,0.3) !important;
+                    text-shadow: 1px 1px 0 #191970;
+                }
+
+                .mobile-controls .actions .a-button {
+                    background: linear-gradient(180deg, #FF6B6B 0%, #E53E3E 100%) !important;
+                    border-color: #8B0000 !important;
+                    box-shadow: 
+                        inset 0 2px 0 #FF9999, 
+                        inset 0 -2px 0 #8B0000,
+                        0 4px 8px rgba(0,0,0,0.3) !important;
+                    text-shadow: 1px 1px 0 #8B0000;
+                }
+
+                .mobile-controls .actions .b-button {
+                    background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%) !important;
+                    border-color: #8B4513 !important;
+                    color: #8B4513 !important;
+                    box-shadow: 
+                        inset 0 2px 0 #FFFF88, 
+                        inset 0 -2px 0 #8B4513,
+                        0 4px 8px rgba(0,0,0,0.3) !important;
+                    text-shadow: 1px 1px 0 #FFFF88;
+                }
+                
+                .mobile-controls .d-pad button:active,
+                .mobile-controls .actions button:active {
+                    transform: translateY(1px) !important;
+                    box-shadow: 
+                        inset 0 1px 0 rgba(255,255,255,0.5), 
+                        inset 0 -1px 0 rgba(0,0,0,0.5),
+                        0 2px 4px rgba(0,0,0,0.3) !important;
+                }
+                
+                .mobile-controls .d-pad,
+                .mobile-controls .actions {
+                    pointer-events: auto !important; /* Re-enable for controls */
+                }
+                
+                .mobile-gameboy-layout,
+                #mobile-controls {
+                    z-index: 1001 !important;
+                    position: fixed !important;
                 }
             }
             
@@ -491,36 +825,55 @@
             }
             
             .setup-actions button {
-                background: linear-gradient(180deg, #FFD700 0%, #FFD700 45%, #FFA500 55%, #FFA500 100%);
-                color: #000000;
+                background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
+                color: #8B4513;
                 border: 3px solid #8B4513;
-                padding: 12px 20px;
-                border-radius: 8px;
+                padding: 14px 22px;
+                border-radius: 12px;
                 font-family: 'Press Start 2P', 'Courier New', monospace;
                 font-size: 0.6em;
                 cursor: pointer;
-                margin: 5px;
-                box-shadow: inset 0 2px 0 #FFFF88, inset 0 -2px 0 #CC8800, 0 4px 8px rgba(0,0,0,0.3);
+                margin: 8px;
+                box-shadow: 
+                    inset 0 3px 0 #FFFF88, 
+                    inset 0 -3px 0 #CC8800, 
+                    0 5px 10px rgba(0,0,0,0.3);
                 transition: all 0.1s ease;
-                text-shadow: 1px 1px 0px #FFFFFF;
+                text-shadow: 1px 1px 0px #FFFF88;
+                font-weight: bold;
             }
             
             .setup-actions button:hover {
-                transform: scale(1.05);
+                transform: translateY(-2px);
+                box-shadow: 
+                    inset 0 3px 0 #FFFF88, 
+                    inset 0 -3px 0 #CC8800, 
+                    0 7px 12px rgba(0,0,0,0.35);
             }
             
             .setup-actions button:active {
-                transform: scale(0.95);
-                box-shadow: inset 0 1px 0 #FFFF88, inset 0 -1px 0 #CC8800, 0 2px 4px rgba(0,0,0,0.3);
+                transform: translateY(1px);
+                box-shadow: 
+                    inset 0 2px 0 #FFFF88, 
+                    inset 0 -2px 0 #CC8800, 
+                    0 3px 6px rgba(0,0,0,0.3);
             }
             
             #skip-integration-btn {
-                background: linear-gradient(180deg, #FF6B6B 0%, #FF6B6B 45%, #E53E3E 55%, #E53E3E 100%) !important;
-                box-shadow: inset 0 2px 0 #FF9999, inset 0 -2px 0 #CC2222, 0 4px 8px rgba(0,0,0,0.3) !important;
+                background: linear-gradient(180deg, #FF6B6B 0%, #E53E3E 100%) !important;
+                color: #FFFFFF !important;
+                text-shadow: 1px 1px 0px #8B0000 !important;
+                box-shadow: 
+                    inset 0 3px 0 #FF9999, 
+                    inset 0 -3px 0 #CC2222, 
+                    0 5px 10px rgba(0,0,0,0.3) !important;
             }
             
             #skip-integration-btn:active {
-                box-shadow: inset 0 1px 0 #FF9999, inset 0 -1px 0 #CC2222, 0 2px 4px rgba(0,0,0,0.3) !important;
+                box-shadow: 
+                    inset 0 2px 0 #FF9999, 
+                    inset 0 -2px 0 #CC2222, 
+                    0 3px 6px rgba(0,0,0,0.3) !important;
             }
             
             .setup-info {
@@ -602,6 +955,63 @@
                 
                 .input-group input {
                     font-size: 0.45em;
+                }
+            }
+            /* Mobile Touch Optimization */
+            @media (max-width: 768px) {
+                html, body {
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                    overflow: hidden;
+                    -webkit-overflow-scrolling: none;
+                    overscroll-behavior: none;
+                }
+
+                /* Prevent iOS Safari bounce effect */
+                body {
+                    -webkit-touch-callout: none;
+                    -webkit-user-select: none;
+                    user-select: none;
+                    -webkit-tap-highlight-color: transparent;
+                    touch-action: manipulation;
+                }
+
+                /* Prevent pull-to-refresh */
+                body {
+                    overscroll-behavior-y: contain;
+                    height: 100vh;
+                    height: -webkit-fill-available;
+                }
+
+                /* Ensure mobile controls area is reserved */
+                .game-screen {
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                }
+            }
+
+            /* Performance optimizations for mobile */
+            @media (max-width: 768px) {
+                #canvas {
+                    /* Enable GPU acceleration for smooth scaling */
+                    transform: translateZ(0);
+                    -webkit-transform: translateZ(0);
+                    will-change: transform;
+                    
+                    /* Optimize for mobile rendering */
+                    -webkit-backface-visibility: hidden;
+                    backface-visibility: hidden;
+                    -webkit-perspective: 1000;
+                    perspective: 1000;
+                }
+                
+                #mobile-controls {
+                    /* Optimize controls rendering */
+                    -webkit-transform: translateZ(0);
+                    transform: translateZ(0);
+                    will-change: transform;
                 }
             }
         </style>
@@ -699,15 +1109,21 @@
                     </button>
                 </div>
 
-                <canvas id="canvas" width="640" height="480">
-                    <p>Your browser does not support the canvas element. Please update your browser!</p>
-                </canvas>
-                <div class="sidebar right"></div>
+                <!-- Canvas - Responsive for both desktop and mobile -->
+                <div class="wooden-arcade-box">
+                    <div class="arcade-screen-bezel">
+                        <canvas id="canvas" width="640" height="480" style="image-rendering: pixelated; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges;">
+                            <p>Your browser does not support the canvas element. Please update your browser!</p>
+                        </canvas>
+                    </div>
+                </div>
+                
+                <!-- For mobile, canvas will be moved outside the wooden box by CSS -->
             </div>
         </div>
 
         <!-- Mobile Controls -->
-        <div class="mobile-controls">
+        <div class="mobile-controls" style="z-index: 1001; position: fixed;">
             <div class="d-pad">
                 <button class="up">▲</button>
                 <button class="left">◀</button>
@@ -768,7 +1184,9 @@
         <script src="Enjine/application.js"></script>
 
         <!-- Actual game code -->
-        <script src="code/setup.js"></script>
+    <script src="code/setup.js"></script>
+    <script src="code/inputController.js"></script>
+    <script src="code/mobileControls.js"></script>
         <script src="code/spriteCuts.js"></script>
         <script src="code/level.js"></script>
         <script src="code/backgroundGenerator.js"></script>
@@ -853,8 +1271,45 @@
                     storeBtn.style.display = 'none'; // Hidden during gameplay
                 }
                 
-                // Initialize the game
-                new Enjine.Application().Initialize(new Mario.LoadingState(), 320, 240);
+                // 1. Initialize InputController first
+                if (Mario.inputController) {
+                    Mario.inputController.initialize();
+                }
+                
+                // 2. Initialize mobile touch controls before starting update loop
+                if (window.Mario && Mario.mobileControls) {
+                    Mario.mobileControls.initialize();
+                }
+                
+                // 3. Start InputController update loop after controls are ready
+                if (Mario.inputController) {
+                    setInterval(() => {
+                        if (Mario.inputController) {
+                            Mario.inputController.updateActions();
+                        }
+                    }, 16); // ~60fps update rate
+                    console.log('InputController: Update loop started');
+                }
+                
+                // 4. Initialize the game last
+                const gameApp = new Enjine.Application();
+                Enjine.Application.Instance = gameApp; // Make instance available for mobile controls and other components
+                gameApp.Initialize(new Mario.LoadingState(), 320, 240);
+
+                // Development helper: expose a function to force entering a LevelState
+                // Usage (in browser console or Playwright): window.forceEnterLevel()
+                window.forceEnterLevel = function () {
+                    try {
+                        if (Enjine && Enjine.Application && Enjine.Application.Instance && Enjine.Application.Instance.stateContext) {
+                            Enjine.Application.Instance.stateContext.ChangeState(new Mario.LevelState(1, Mario.LevelType.Overground));
+                            console.log('DevHelper: forced LevelState');
+                        } else {
+                            console.warn('DevHelper: Enjine not initialized yet');
+                        }
+                    } catch (e) {
+                        console.error('DevHelper: forceEnterLevel failed', e);
+                    }
+                };
                 
                 // Initialize PlaySuper integration only if rewards are enabled
                 if (withRewards && window.Mario && window.Mario.playSuperIntegration) {

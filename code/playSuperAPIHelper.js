@@ -355,6 +355,17 @@ Mario.PlaySuperAPIHelper.prototype.clearCache = function () {
  * This is where all the magic happens!
  */
 Mario.PlaySuperAPIHelper.prototype.makeAPICall = function (url, method, body = null, customHeaders = {}) {
+    // Auto-initialize if not already initialized
+    if (!this.isInitialized) {
+        console.log('🔄 Auto-initializing API Helper...');
+        try {
+            this.init();
+        } catch (error) {
+            console.error('❌ Failed to auto-initialize API Helper:', error);
+            return Promise.reject(new Error('❌ Failed to initialize API Helper: ' + error.message));
+        }
+    }
+
     if (!this.validateConfig()) {
         return Promise.reject(new Error('❌ PlaySuper API Helper not properly configured'));
     }

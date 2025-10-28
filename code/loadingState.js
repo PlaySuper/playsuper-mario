@@ -170,6 +170,16 @@ Mario.LoadingState.prototype.CheckForChange = function (context) {
             Mario.dailyRewards = new Mario.DailyRewards();
         }
 
+        // Initialize PlaySuper API Helper
+        if (typeof Mario.playSuperAPIHelper !== 'undefined') {
+            try {
+                Mario.playSuperAPIHelper.init();
+                console.log('✅ PlaySuper API Helper initialized');
+            } catch (error) {
+                console.warn('⚠️ PlaySuper API Helper initialization failed:', error.message);
+            }
+        }
+
         // Initialize discount system
         if (typeof Mario.discountSystem !== 'undefined') {
             Mario.discountSystem.init();

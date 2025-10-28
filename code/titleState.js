@@ -10,12 +10,10 @@ Mario.TitleState = function () {
     this.bounce = null;
     this.font = null;
     this.lastKeyPressTime = 0; // Track last key press to prevent rapid toggling
-
-    // State transition flags for button handlers
-    this.GotoMapState = false;
 };
 
 Mario.TitleState.prototype = new Enjine.GameState();
+Mario.TitleState.prototype.constructor = Mario.TitleState;
 
 Mario.TitleState.prototype.Enter = function () {
     console.log('🏠 Entering title state...');
@@ -39,8 +37,17 @@ Mario.TitleState.prototype.Enter = function () {
     this.logo.Image = Enjine.Resources.Images["logo"];
     this.logo.X = 0, this.logo.Y = 0;
 
-    // Create buttons instead of keyboard text prompts
-    this.createTitleButtons();
+    this.font = Mario.SpriteCuts.CreateRedFont();
+    this.font.Strings[0] = { String: "Press S to Start", X: 96, Y: 120 };
+
+    // Create separate fonts for better visibility against the background
+    this.rewardsFont = Mario.SpriteCuts.CreateWhiteFont(); // White for maximum contrast
+    this.rewardsFont.Strings[0] = { String: "Press R for Rewards Store", X: 72, Y: 142 }; // 🏪 Centered on background
+
+    this.dailyFont = Mario.SpriteCuts.CreateWhiteFont(); // White for maximum contrast
+    this.dailyFont.Strings[0] = { String: "Press D for Daily Rewards", X: 68, Y: 162 }; // Centered on background
+
+    this.balanceFont = Mario.SpriteCuts.CreateYellowFont();
 
     this.logoY = 20;
 
@@ -89,8 +96,10 @@ Mario.TitleState.prototype.Enter = function () {
     // 🔄 Reset key press timer when entering title state
     this.lastKeyPressTime = 0;
 
-    // 🔄 Reset state transition flags
-    this.GotoMapState = false;
+    // Set mobile controls for title screen
+    if (Mario.mobileControls) {
+        Mario.mobileControls.showTitleControls();
+    }
 
     // 🎹 Clear any stuck keyboard states to prevent input issues
     if (typeof Enjine.KeyboardInput !== 'undefined' && Enjine.KeyboardInput.Pressed) {
@@ -105,18 +114,12 @@ Mario.TitleState.prototype.Enter = function () {
 };
 
 Mario.TitleState.prototype.Exit = function () {
-    console.log('🚪 Exiting title state...');
-
     Mario.StopMusic();
-
-    // Clean up buttons
-    this.removeTitleButtons();
 
     this.drawManager.Clear();
     delete this.drawManager;
     delete this.camera;
-
-    console.log('Title state cleanup complete');
+    delete this.font;
 };
 
 Mario.TitleState.prototype.Update = function (delta) {
@@ -126,22 +129,6 @@ Mario.TitleState.prototype.Update = function (delta) {
     this.camera.X += delta * 25;
 
     this.drawManager.Update(delta);
-
-    // Update button positions if canvas moved (responsive design)
-    this.updateButtonPositions();
-};
-
-Mario.TitleState.prototype.updateButtonPositions = function () {
-    const buttonContainer = document.getElementById('mario-title-buttons');
-    const canvas = document.getElementById('canvas');
-
-    if (buttonContainer && canvas) {
-        const canvasRect = canvas.getBoundingClientRect();
-        buttonContainer.style.top = canvasRect.top + 'px';
-        buttonContainer.style.left = canvasRect.left + 'px';
-        buttonContainer.style.width = canvasRect.width + 'px';
-        buttonContainer.style.height = canvasRect.height + 'px';
-    }
 };
 
 Mario.TitleState.prototype.Draw = function (context) {
@@ -149,232 +136,94 @@ Mario.TitleState.prototype.Draw = function (context) {
 
     context.drawImage(Enjine.Resources.Images["title"], 0, 120);
     context.drawImage(Enjine.Resources.Images["logo"], 0, this.logoY);
-};
 
-// ============= BUTTON CREATION SYSTEM =============
+    // Add stylish backgrounds for better text readability
+    context.fillStyle = 'rgba(0, 0, 0, 0.5)'; // Lighter semi-transparent black background
 
-Mario.TitleState.prototype.createTitleButtons = function () {
-    console.log('Creating title screen buttons...');
+    // Background for "Press R for Rewards Store" - sized to contain full text with generous padding
+    this.drawRoundedRect(context, 66, 138, 220, 14, 4);
 
-    // Clean up any existing buttons
-    this.removeTitleButtons();
+    // Background for "Press D for Daily Rewards" - sized to contain full text with generous padding
+    this.drawRoundedRect(context, 62, 158, 220, 14, 4);
 
-    // Get canvas position for button positioning
-    const canvas = document.getElementById('canvas');
-    if (!canvas) {
-        console.error('Canvas not found for button positioning');
-        return;
-    }
+    // Draw main start text
+    this.font.Draw(context, this.Camera);
 
-    const canvasRect = canvas.getBoundingClientRect();
+    // Draw rewards store text with better visibility
+    this.rewardsFont.Draw(context, this.Camera);
 
-    // Create button container
-    const buttonContainer = document.createElement('div');
-    buttonContainer.id = 'mario-title-buttons';
-    buttonContainer.style.cssText = `
-        position: absolute;
-        top: ${canvasRect.top}px;
-        left: ${canvasRect.left}px;
-        width: ${canvasRect.width}px;
-        height: ${canvasRect.height}px;
-        pointer-events: none;
-        z-index: 1000;
-    `;
+    // Draw daily rewards text with better visibility
+    this.dailyFont.Draw(context, this.Camera);
 
-    // Start Game Button
-    const startButton = this.createButton('🏁 START GAME', 'start-btn');
-    startButton.style.cssText += `
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(180deg, #32CD32 0%, #228B22 100%);
-        color: white;
-        border: 3px solid #006400;
-        font-size: 14px;
-        padding: 12px 24px;
-    `;
-    startButton.onclick = () => this.startGame();
-
-    // Rewards Store Button
-    const rewardsButton = this.createButton('🏪 REWARDS STORE', 'rewards-btn');
-    rewardsButton.style.cssText += `
-        position: absolute;
-        left: 50%;
-        top: 60%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(180deg, #FFD700 0%, #FFA500 100%);
-        color: #8B4513;
-        border: 3px solid #8B4513;
-        font-size: 12px;
-        padding: 10px 20px;
-    `;
-    rewardsButton.onclick = () => this.openRewardsStore();
-
-    // Daily Rewards Button
-    const dailyButton = this.createButton('🎁 DAILY REWARDS', 'daily-btn');
-    dailyButton.style.cssText += `
-        position: absolute;
-        left: 50%;
-        top: 70%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(180deg, #9370DB 0%, #663399 100%);
-        color: white;
-        border: 3px solid #4B0082;
-        font-size: 12px;
-        padding: 10px 20px;
-    `;
-    dailyButton.onclick = () => this.showDailyRewards();
-
-    // Add buttons to container
-    buttonContainer.appendChild(startButton);
-    buttonContainer.appendChild(rewardsButton);
-    buttonContainer.appendChild(dailyButton);
-
-    // Add container to document
-    document.body.appendChild(buttonContainer);
-
-    // Add button styles
-    this.addButtonStyles();
-
-    console.log('Title screen buttons created successfully');
-};
-
-Mario.TitleState.prototype.createButton = function (text, id) {
-    const button = document.createElement('button');
-    button.id = id;
-    button.innerHTML = text;
-    button.style.cssText = `
-        font-family: 'Press Start 2P', 'Courier New', monospace;
-        font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-shadow: 1px 1px 0px rgba(0,0,0,0.5);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        pointer-events: all;
-        white-space: nowrap;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    `;
-    return button;
-};
-
-Mario.TitleState.prototype.addButtonStyles = function () {
-    if (document.head.querySelector('#mario-title-button-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'mario-title-button-styles';
-    style.textContent = `
-        #mario-title-buttons button:hover {
-            transform: translate(-50%, -50%) scale(1.05) translateY(-2px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
-            filter: brightness(1.1);
+    // Draw the coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 10, 10);
+        } catch (error) {
+            console.log('TitleState: DrawCoinBalance failed:', error.message);
         }
-        
-        #mario-title-buttons button:active {
-            transform: translate(-50%, -50%) scale(0.95);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        #mario-title-buttons button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: translate(-50%, -50%) !important;
-        }
-        
-        @media (max-width: 768px) {
-            #mario-title-buttons button {
-                font-size: 10px !important;
-                padding: 8px 16px !important;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-};
-
-Mario.TitleState.prototype.removeTitleButtons = function () {
-    const existingContainer = document.getElementById('mario-title-buttons');
-    if (existingContainer) {
-        existingContainer.remove();
-        console.log('Removed existing title buttons');
     }
 };
 
-// ============= BUTTON ACTION HANDLERS =============
-
-Mario.TitleState.prototype.startGame = function () {
-    console.log('Start game button clicked');
-
-    // Play button sound
-    if (typeof Enjine !== 'undefined' && Enjine.Resources) {
-        Enjine.Resources.PlaySound("powerup");
-    }
-
-    // Set flag for state transition (will be handled by CheckForChange)
-    console.log('🗺️ Setting flag to start game...');
-    this.GotoMapState = true;
-
-    // Debug: Check if the flag was actually set
-    console.log('🔍 GotoMapState flag is now:', this.GotoMapState);
-
-    // Debug: Force check if CheckForChange works
-    setTimeout(() => {
-        console.log('🕐 After 1 second, GotoMapState flag is:', this.GotoMapState);
-        console.log('🕐 Attempting manual CheckForChange call...');
-
-        // Get the application context
-        if (typeof Enjine !== 'undefined' && Enjine.Application && Enjine.Application.Instance) {
-            const app = Enjine.Application.Instance;
-            console.log('🕐 Application instance found:', !!app);
-
-            try {
-                this.CheckForChange(app);
-            } catch (error) {
-                console.error('🚨 Error in manual CheckForChange:', error);
-            }
-        } else {
-            console.error('🚨 No application instance found!');
-        }
-    }, 1000);
-
-};
-
-Mario.TitleState.prototype.openRewardsStore = function () {
-    console.log('🏪 Rewards store button clicked');
-
-    // Play button sound
-    if (typeof Enjine !== 'undefined' && Enjine.Resources) {
-        Enjine.Resources.PlaySound("coin");
-    }
-
-    if (typeof Mario.playSuperIntegration !== 'undefined') {
-        Mario.playSuperIntegration.openStore();
-    } else {
-        console.warn('PlaySuper integration not available');
-        alert('Rewards store not available. Please check your PlaySuper integration.');
-    }
+// Helper function to draw rounded rectangles for better visual appeal
+Mario.TitleState.prototype.drawRoundedRect = function (context, x, y, width, height, radius) {
+    context.beginPath();
+    context.moveTo(x + radius, y);
+    context.lineTo(x + width - radius, y);
+    context.quadraticCurveTo(x + width, y, x + width, y + radius);
+    context.lineTo(x + width, y + height - radius);
+    context.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    context.lineTo(x + radius, y + height);
+    context.quadraticCurveTo(x, y + height, x, y + height - radius);
+    context.lineTo(x, y + radius);
+    context.quadraticCurveTo(x, y, x + radius, y);
+    context.closePath();
+    context.fill();
 };
 
 Mario.TitleState.prototype.CheckForChange = function (context) {
-    // Handle state transitions triggered by buttons
-    if (this.GotoMapState) {
-        console.log('🗺️ CheckForChange: GotoMapState flag detected!');
-        console.log('🗺️ Executing state transition to MapState...');
-        console.log('🗺️ Context available:', !!context);
+    const currentTime = Date.now();
 
-        // Create fresh MapState for clean game entry
-        Mario.GlobalMapState = new Mario.MapState();
-        console.log('🗺️ MapState created:', !!Mario.GlobalMapState);
+    // Debug keyboard input with debouncing
+    // Start game on jump action (Jump button) or S key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('jump') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
+        console.log('S key pressed - starting game...');
+        this.lastKeyPressTime = currentTime;
 
+        // Use or create the global map state for persistent progress
+        if (!Mario.GlobalMapState) {
+            console.log('🗺️ Creating new GlobalMapState for first game...');
+            Mario.GlobalMapState = new Mario.MapState();
+        } else {
+            console.log('🗺️ Reusing existing GlobalMapState with player progress...');
+        }
         context.ChangeState(Mario.GlobalMapState);
-        console.log('🗺️ ChangeState called successfully');
         return;
     }
 
-    // Debug: Log when CheckForChange is called but flag not set
-    if (this.GotoMapState === false) {
-        console.log('🔍 CheckForChange called, but GotoMapState is false');
+    // 🏪 Store access with R key (Rewards)
+    // Open store on run action (Run button) or R key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('run') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.R)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
+        console.log('🏪 Opening store from home screen...');
+        this.lastKeyPressTime = currentTime;
+        if (typeof Mario.playSuperIntegration !== 'undefined') {
+            Mario.playSuperIntegration.openStore();
+        } else {
+            console.warn('PlaySuper integration not available');
+        }
+        return;
+    }
+
+    // Daily rewards access with D key (Daily)
+    // Open daily rewards on duck action (D-pad down) or D key
+    if ((Mario.inputController ? Mario.inputController.isActionActive('duck') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.D)) &&
+        (currentTime - this.lastKeyPressTime) > 200) {
+        console.log('Opening daily rewards...');
+        this.lastKeyPressTime = currentTime;
+        this.showDailyRewards();
+        return;
     }
 };/**
  * 🧹 Clean up any existing modals or overlays

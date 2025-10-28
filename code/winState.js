@@ -17,6 +17,7 @@ Mario.WinState = function () {
 };
 
 Mario.WinState.prototype = new Enjine.GameState();
+Mario.WinState.prototype.constructor = Mario.WinState;
 
 Mario.WinState.prototype.Enter = function () {
     this.drawManager = new Enjine.DrawableManager();
@@ -74,6 +75,15 @@ Mario.WinState.prototype.Update = function (delta) {
 
 Mario.WinState.prototype.Draw = function (context) {
     this.drawManager.Draw(context, this.camera);
+
+    // Draw coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 10, 10);
+        } catch (error) {
+            console.log('WinState: DrawCoinBalance failed:', error.message);
+        }
+    }
 };
 
 Mario.WinState.prototype.CheckForChange = function (context) {

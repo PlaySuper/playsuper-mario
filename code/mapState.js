@@ -31,14 +31,23 @@ Mario.MapState = function () {
     this.EnterLevel = false;
     this.LevelDifficulty = 0;
     this.LevelType = 0;
+
+    // Track previous jump state to detect rising edge
+    this.prevJumpState = false;
     this.GotoTitleState = false;
     this.lastKeyPressTime = 0; // Track last key press to prevent rapid toggling
+
+    // Level progression system
+    this.currentLevelIndex = 0; // Track which level the player is on (0 = first level)
+    this.completedLevels = []; // Array of completed level indices
+    this.maxLevelsPerWorld = 8; // Maximum levels per world before advancing
 
     this.WorldNumber = -1;
     this.NextWorld();
 };
 
 Mario.MapState.prototype = new Enjine.GameState();
+Mario.MapState.prototype.constructor = Mario.MapState;
 
 Mario.MapState.prototype.Enter = function () {
     this.WaterSprite = new Enjine.AnimatedSprite();
@@ -115,7 +124,15 @@ Mario.MapState.prototype.Enter = function () {
     this.LevelDifficulty = 0;
     this.LevelType = 0;
 
+    // Allow entering level by default when not pressing jump
+    this.CanEnterLevel = true;
+
     Mario.PlayMapMusic();
+
+    // Set mobile controls for map screen
+    if (Mario.mobileControls) {
+        Mario.mobileControls.showMapControls();
+    }
 };
 
 Mario.MapState.prototype.Exit = function () {
@@ -152,7 +169,7 @@ Mario.MapState.prototype.NextWorld = function () {
 
     // 🔄 Reset key press timer when entering map state
     this.lastKeyPressTime = 0;
-    console.log('Map state entered - key input ready');
+    Mario.playSuperConfig.DebugLog('Map state entered - key input ready');
 };
 
 Mario.MapState.prototype.GenerateLevel = function () {
@@ -478,12 +495,12 @@ Mario.MapState.prototype.IsWater = function (x, y) {
 Mario.MapState.prototype.Update = function (delta) {
     var x = 0, y = 0, difficulty = 0, type = 0;
 
-    // 🏠 Check for Home key (H) to return to title screen
+    // 🏠 Check for Home action to return to title screen
     // Add debouncing to prevent rapid state changes
     const currentTime = Date.now();
-    if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) &&
+    if (Mario.inputController.isActionActive('home') &&
         (currentTime - this.lastKeyPressTime) > 200) { // 200ms debounce - more responsive
-        console.log('🏠 Returning to home screen from map...');
+        Mario.playSuperConfig.DebugLog('🏠 Returning to home screen from map...');
         this.lastKeyPressTime = currentTime;
         this.GotoTitleState = true;
         return;
@@ -509,15 +526,31 @@ Mario.MapState.prototype.Update = function (delta) {
         this.XMarioA = 0;
         this.YMarioA = 0;
 
-        if (this.CanEnterLevel && Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S)) {
+        // DEBUG: log the current input controller actions observed by MapState
+        try {
+            Mario.playSuperConfig.DebugLog('MapState: input snapshot - left=', Mario.inputController.isActionActive('left'),
+                'right=', Mario.inputController.isActionActive('right'),
+                'up=', Mario.inputController.isActionActive('up'),
+                'down=', Mario.inputController.isActionActive('down'),
+                'jump=', Mario.inputController.isActionActive('jump'));
+        } catch (e) {
+            Mario.playSuperConfig.DebugLog('MapState: input snapshot unavailable', e);
+        }
+
+        // Detect rising edge of jump (press) to enter a level reliably
+        const currentJump = Mario.inputController.isActionActive && Mario.inputController.isActionActive('jump');
+        if (currentJump && !this.prevJumpState && this.CanEnterLevel) {
             if (this.Level[x][y] === Mario.MapTile.Level && this.Data[x][y] !== -11) {
                 if (this.Level[x][y] === Mario.MapTile.Level && this.Data[x][y] !== 0 && this.Data[x][y] > -10) {
-                    difficulty = this.WorldNumber + 1;
-                    Mario.MarioCharacter.LevelString = difficulty + "-";
+                    difficulty = this.WorldNumber + 1 + this.currentLevelIndex;
+                    Mario.MarioCharacter.LevelString = (this.WorldNumber + 1) + "-" + (this.currentLevelIndex + 1);
                     type = Mario.LevelType.Overground;
 
-                    if (this.Data[x][y] > 1 && ((Math.random() * 3) | 0) === 0) {
+                    // Vary level types based on current level index for progression
+                    if (this.currentLevelIndex === 2 || this.currentLevelIndex === 5) {
                         type = Mario.LevelType.Underground;
+                    } else if (this.currentLevelIndex === 7) {
+                        type = Mario.LevelType.Castle;
                     }
 
                     if (this.Data[x][y] < 0) {
@@ -544,18 +577,24 @@ Mario.MapState.prototype.Update = function (delta) {
             }
         }
 
-        this.CanEnterLevel = !Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.S);
+        // Update previous jump state and CanEnterLevel for next frame
+        this.prevJumpState = !!currentJump;
+        this.CanEnterLevel = !currentJump;
 
-        if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Left)) {
+        if (Mario.inputController.isActionActive('left')) {
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking left');
             this.TryWalking(-1, 0);
         }
-        if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Right)) {
+        if (Mario.inputController.isActionActive('right')) {
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking right');
             this.TryWalking(1, 0);
         }
-        if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Up)) {
+        if (Mario.inputController.isActionActive('up')) {
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking up');
             this.TryWalking(0, -1);
         }
-        if (Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.Down)) {
+        if (Mario.inputController.isActionActive('down')) {
+            Mario.playSuperConfig.DebugLog('MapState: TryWalking down');
             this.TryWalking(0, 1);
         }
     }
@@ -650,8 +689,8 @@ Mario.MapState.prototype.Draw = function (context) {
     var lives = Mario.MarioCharacter ? Mario.MarioCharacter.Lives : 3;
     this.Font.Strings[0] = { String: "MARIO " + lives, X: 4, Y: 4 };
     this.FontShadow.Strings[0] = { String: "MARIO " + lives, X: 5, Y: 5 };
-    this.Font.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1), X: 256, Y: 4 };
-    this.FontShadow.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1), X: 257, Y: 5 };
+    this.Font.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1) + "-" + (this.currentLevelIndex + 1), X: 256, Y: 4 };
+    this.FontShadow.Strings[1] = { String: "WORLD " + (this.WorldNumber + 1) + "-" + (this.currentLevelIndex + 1), X: 257, Y: 5 };
 
     // 🏠 Home button indicator
     this.Font.Strings[2] = { String: "H:HOME", X: 4, Y: 220 };
@@ -659,11 +698,44 @@ Mario.MapState.prototype.Draw = function (context) {
 
     this.FontShadow.Draw(context, this.camera);
     this.Font.Draw(context, this.camera);
+
+    // Draw coin balance only if PlaySuper is initialized and function exists
+    if (typeof Mario.DrawCoinBalance === 'function' && window.playSuperCredentials) {
+        try {
+            Mario.DrawCoinBalance(context, 4, 35);
+        } catch (error) {
+            console.log('MapState: DrawCoinBalance failed:', error.message);
+        }
+    }
 };
 
 Mario.MapState.prototype.LevelWon = function () {
     var x = this.XMario / 16, y = this.YMario / 16;
+
+    console.log('🏆 Level completed! Current level index:', this.currentLevelIndex);
+
+    // Mark current level as completed
+    if (this.completedLevels.indexOf(this.currentLevelIndex) === -1) {
+        this.completedLevels.push(this.currentLevelIndex);
+        console.log('✅ Level', this.currentLevelIndex + 1, 'marked as completed');
+    }
+
+    // Advance to next level
+    this.currentLevelIndex++;
+    console.log('🚀 Advanced to level index:', this.currentLevelIndex);
+
+    // Check if we should advance to next world
+    if (this.currentLevelIndex >= this.maxLevelsPerWorld) {
+        console.log('🌍 Advancing to next world...');
+        this.currentLevelIndex = 0; // Reset level index for new world
+        this.completedLevels = []; // Reset completed levels for new world
+        this.NextWorld();
+        return;
+    }
+
+    // Update map visual state
     if (this.Data[x][y] === -2) {
+        // This was a world-ending level, advance world
         this.NextWorld();
         return;
     }
@@ -684,7 +756,8 @@ Mario.MapState.prototype.GetY = function () {
 };
 
 Mario.MapState.prototype.CheckForChange = function (context) {
-    if (this.GotoTitleState) {
+    // Return home on Home action (H button) or Esc key
+    if (Mario.inputController ? Mario.inputController.isActionActive('home') : Enjine.KeyboardInput.IsKeyDown(Enjine.Keys.H) || this.GotoTitleState) {
         context.ChangeState(new Mario.TitleState());
         return;
     }
